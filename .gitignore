@@ -1,0 +1,9 @@
+.idea
+.nyc_output
+.settings
+.sass-cache
+.vscode
+coverage
+debug.log
+docs
+node_modules

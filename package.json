@@ -1,0 +1,54 @@
+{
+  "name": "@onenexus/polymorph",
+  "version": "1.0.0",
+  "description": "Style DOM elements that follow the Synergy naming convention using JavaScript",
+  "main": "dist/polymorph.js",
+  "author": "(Edmund Reed)[http://twitter.com/esr360] <esr360@live.com>",
+  "homepage": "https://github.com/One-Nexus/Polymorph",
+  "keywords": [
+    "javascript",
+    "js",
+    "DOM",
+    "BEM",
+    "Synergy",
+    "modules",
+    "components",
+    "front-end",
+    "framework",
+    "web",
+    "css",
+    "css-in-js",
+    "jss",
+    "ui"
+  ],
+  "bugs": {
+    "url": "https://github.com/One-Nexus/Polymorph/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/One-Nexus/Polymorph.git"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.7.0",
+    "babel-register": "^6.26.0",
+    "eslint": "^4.14.0",
+    "jsdoc": "^3.5.5",
+    "jsdom": "^11.0.0",
+    "jsdom-global": "^3.0.2",
+    "mocha": "^3.5.3",
+    "nyc": "^13.0.1",
+    "stylelint": "^8.4.0",
+    "webpack": "^3.10.0"
+  },
+  "scripts": {
+    "lint": "eslint './src/js/**/*.js'",
+    "test": "nyc --require babel-register mocha tests/tests.js --require babel-register && nyc report --reporter=lcov",
+    "docs": "jsdoc src -r -d docs/js",
+    "js": "webpack",
+    "compile": "npm run lint && npm test && npm run docs && npm run js"
+  }
+}
