@@ -12,6 +12,10 @@ import getModuleNamespace from './utilities/getModuleNamespace';
  * @param {*} parentElement 
  */
 export default function polymorph(element, styles, config, globals, parentElement) {
+    if (styles.constructor === Array) {
+        return styles.forEach(stylesheet => polymorph(element, stylesheet, config, globals, parentElement));
+    }
+
     const values = (typeof styles === 'object') ? styles : styles(element, config, globals);
 
     if (values.constructor === Array) {
