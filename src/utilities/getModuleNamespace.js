@@ -6,9 +6,10 @@
  */
 export default function getModuleNamespace(query, strict = false) {
     if (query instanceof HTMLElement) {
-        if (query.closest('[data-module]')) {
-            return query.closest('[data-module]').getAttribute('data-module');
-        }
+        // @TODO this returns the `strict` value
+        // if (query.closest('[data-module]')) {
+        //     return query.closest('[data-module]').getAttribute('data-module');
+        // }
 
         if (query.classList.length) {
             if (strict) {

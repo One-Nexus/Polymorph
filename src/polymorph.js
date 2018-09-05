@@ -12,6 +12,17 @@ import getModuleNamespace from './utilities/getModuleNamespace';
  * @param {*} parentElement 
  */
 export default function polymorph(element, styles, config, globals, parentElement) {
+    // attach repaint methods to parent element
+    if (!parentElement && !element.repaint) {
+        element.repaint = () => {
+            element.style.cssText = null;
+
+            polymorph(element, styles, config, globals, globals);
+
+            element.dispatchEvent(new Event('moduledidrepaint'));
+        };
+    }
+
     if (styles.constructor === Array) {
         return styles.forEach(stylesheet => polymorph(element, stylesheet, config, globals, parentElement));
     }
@@ -24,25 +35,11 @@ export default function polymorph(element, styles, config, globals, parentElemen
         }
     }
 
-    const stylesDidMount   = new Event('stylesdidmount');
-    const moduleDidRepaint = new Event('moduledidrepaint');
-
     // initialise data interface
     element.data = element.data || { states: [] };
 
     // determine parent element
     parentElement = parentElement || element;
-
-    // attach repaint methods to parent element
-    if (element === parentElement && config !== false) {
-        parentElement.repaint = () => {
-            element.style.cssText = null;
-
-            polymorph(parentElement, (typeof styles === 'object') ? styles : styles(element, config, globals), false, globals);
-
-            parentElement.dispatchEvent(moduleDidRepaint);
-        };
-    }
 
     for (let [key, value] of Object.entries(values)) {
         const subComponent = [...element.querySelectorAll(`[class*="_${key}"]`)].filter(subComponent => {
@@ -137,7 +134,7 @@ export default function polymorph(element, styles, config, globals, parentElemen
     }
 
     if (element === parentElement && config !== false) {
-        element.dispatchEvent(stylesDidMount);
+        element.dispatchEvent(new Event('stylesdidmount'));
     }
 }
 
