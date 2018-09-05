@@ -3,8 +3,8 @@ import getModuleNamespace from './getModuleNamespace';
 /**
  * @param {*} componentName 
  */
-export default function getComponents({ element, componentName = '', modifier, namespace, componentGlue }) {
-    const query = (namespace || getModuleNamespace(element, 'strict')) + (componentName ? (componentGlue + componentName) : '');
+export default function getComponents({ element, componentName = '', modifier, namespace, componentGlue, modifierGlue }) {
+    const query = (namespace || getModuleNamespace(element, componentGlue, modifierGlue, 'strict')) + (componentName ? (componentGlue + componentName) : '');
 
     return [].concat(...[...element.querySelectorAll(`[class*="${query}"]`)].filter(component => {
         return ([...component.classList].some(className => {

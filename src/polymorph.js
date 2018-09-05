@@ -41,10 +41,13 @@ export default function polymorph(element, styles, config, globals, parentElemen
     // determine parent element
     parentElement = parentElement || element;
 
+    const componentGlue = config.componentGlue || (window.polymorph && polymorph.componentGlue) || '_';
+    const modifierGlue = config.modifierGlue || (window.polymorph && polymorph.modifierGlue) || '-';
+
     for (let [key, value] of Object.entries(values)) {
-        const subComponent = [...element.querySelectorAll(`[class*="_${key}"]`)].filter(subComponent => {
+        const subComponent = [...element.querySelectorAll(`[class*="${componentGlue + key}"]`)].filter(subComponent => {
             return [...subComponent.classList].some(className => {
-                return className.indexOf(getModuleNamespace(parentElement)) === 0
+                return className.indexOf(getModuleNamespace(parentElement, componentGlue, modifierGlue)) === 0
             });
         });
 
@@ -52,7 +55,7 @@ export default function polymorph(element, styles, config, globals, parentElemen
             if (key.indexOf('modifier(') > -1) {
                 const modifier = key.replace('modifier(', '').replace(/\)/g, '');
 
-                if (hasModifier({ element, modifier, modifierGlue: '-' })) {
+                if (hasModifier({ element, modifier, modifierGlue, componentGlue })) {
                     polymorph(element, value, false, globals, parentElement);
                 }
             }
@@ -63,9 +66,22 @@ export default function polymorph(element, styles, config, globals, parentElemen
                 element.parentNode.classList.forEach(className => {
                     if (className.indexOf('group') === 0 || className.indexOf('wrapper') === 0) {
                         // apply styles to wrapper/group element
-                        polymorph(element.parentNode, (typeof value === 'object') ? value : value(element.parentNode), false, globals, parentElement);
+                        polymorph(
+                            element.parentNode, 
+                            (typeof value === 'object') ? value : value(element.parentNode), 
+                            false, 
+                            globals, 
+                            parentElement
+                        );
+
                         // apply styles to child modules
-                        polymorph(element, (typeof value === 'object') ? value : value(element)[element.getAttribute('data-module')], false, globals, parentElement);
+                        polymorph(
+                            element, 
+                            (typeof value === 'object') ? value : value(element)[element.getAttribute('data-module')], 
+                            false, 
+                            globals, 
+                            parentElement
+                        );
                     }
                 });
 
@@ -73,15 +89,12 @@ export default function polymorph(element, styles, config, globals, parentElemen
             }
 
             // if target element contains child components matching `key`
-            // @TODO be more transparent, don't depend upon the below logic
-            // being indictative of the desired condition
-            else if (getComponents({ element, componentName: key, componentGlue: '_' }).length) {
-                getComponents({ element, componentName: key, componentGlue: '_' }).forEach(_component => {
+            else if (getComponents({ element, componentName: key, componentGlue }).length) {
+                getComponents({ element, componentName: key, componentGlue }).forEach(_component => {
                     if (typeof value === 'object') {
                         polymorph(_component, value, false, globals, parentElement);
                     } 
                     else if (typeof value === 'function') {
-                        // @TODO getParameterNames(value), pass to `value(...)`
                         polymorph(_component, value(_component), false, globals, parentElement);
                     }                  
                 });
@@ -124,7 +137,7 @@ export default function polymorph(element, styles, config, globals, parentElemen
             }
 
             else {
-
+                // @TODO handle condition (what is it?)
             }
         }
 

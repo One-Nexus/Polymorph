@@ -1,22 +1,11 @@
 import getModuleNamespace from './getModuleNamespace';
 
-export default function hasModifier({ element, modifier, modifierGlue, namespace }) {
+export default function hasModifier({ element, modifier, modifierGlue, componentGlue, namespace }) {
     return [...element.classList].some(className => {
-        const namespaceMatch = className.indexOf(namespace || getModuleNamespace(element)) === 0;
-        // @TODO be more strict with modifierMatch so it only matches exact
-        // modifier and not any modifier that starts with `modifier`
-        const modifierMatch = className.indexOf(modifierGlue + modifier) > -1;
+        const namespaceMatch  = className.indexOf(namespace || getModuleNamespace(element, modifierGlue, componentGlue)) === 0;
+        const isModifierTest1 = className.indexOf(modifierGlue + modifier + modifierGlue) > -1;
+        const isModifierTest2 = className.indexOf(modifierGlue + modifier) === (className.length - modifier.length - 1);
 
-        return namespaceMatch && modifierMatch;
+        return namespaceMatch && (isModifierTest1 || isModifierTest2);
     });
 }
-
-// export default function hasModifier({ element, namespace, modifier, modifierGlue }) {
-//     let matches = [];
-
-//     matches.push(...[...element.classList].filter(className => {
-//         return className.indexOf(namespace || getModuleNamespace(element)) === 0
-//     }).map(target => target.split(modifierGlue).slice(1))[0]);
-
-//     return matches.includes(modifier);
-// }
