@@ -41,8 +41,8 @@ export default function polymorph(element, styles, config, globals, parentElemen
     // determine parent element
     parentElement = parentElement || element;
 
-    const componentGlue = config.componentGlue || (window.polymorph && polymorph.componentGlue) || '_';
-    const modifierGlue = config.modifierGlue || (window.polymorph && polymorph.modifierGlue) || '-';
+    const componentGlue = (config && config.componentGlue) || (window.Synergy && Synergy.componentGlue) || '_';
+    const modifierGlue = (config && config.modifierGlue) || (window.Synergy && Synergy.modifierGlue) || '-';
 
     for (let [key, value] of Object.entries(values)) {
         const subComponent = [...element.querySelectorAll(`[class*="${componentGlue + key}"]`)].filter(subComponent => {
