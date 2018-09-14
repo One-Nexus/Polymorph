@@ -17,7 +17,7 @@ export default function polymorph(element, styles, config, globals, parentElemen
         element.repaint = () => {
             element.style.cssText = null;
 
-            polymorph(element, styles, config, globals, globals);
+            polymorph(element, styles, config, globals);
 
             element.dispatchEvent(new Event('moduledidrepaint'));
         };

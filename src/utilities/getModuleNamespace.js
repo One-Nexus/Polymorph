@@ -2,6 +2,8 @@
  * Get the Module name from a Synergy query/DOM element
  * 
  * @param {*} query - query from which to retrieve a namespace
+ * @param {String} componentGlue
+ * @param {String} modifierGlue
  * @param {Bool} strict - return the root module name, excluding components
  */
 export default function getModuleNamespace(query, componentGlue, modifierGlue, strict = false) {
