@@ -24,7 +24,7 @@ export default function polymorph(element, styles, config, globals, parentElemen
     }
 
     if (styles.constructor === Array) {
-        return styles.forEach(stylesheet => polymorph(element, stylesheet, config, globals, parentElement));
+        return styles.forEach(stylesheet => polymorph(element, stylesheet, config, globals, parentElement, context));
     }
 
     const values = (typeof styles === 'object') ? styles : styles(element, config, globals);
@@ -77,7 +77,7 @@ export default function polymorph(element, styles, config, globals, parentElemen
                         // apply styles to child modules
                         polymorph(
                             element, 
-                            (typeof value === 'object') ? value : value(element)[element.getAttribute('data-module')], 
+                            (typeof value === 'object') ? value : value(element), 
                             false, 
                             globals, 
                             parentElement
@@ -128,7 +128,7 @@ export default function polymorph(element, styles, config, globals, parentElemen
 
             else if (value instanceof Array) {
                 if (value[0] instanceof HTMLElement) {
-                    polymorph(value[0], value[1], false, globals, parentElement);
+                    polymorph(value[0], value[1], false, globals, parentElement, context);
                 }
             }
 
@@ -145,7 +145,7 @@ export default function polymorph(element, styles, config, globals, parentElemen
         }
 
         else {
-            if (!element.data.properties[key] || (element.data.properties[key].context === context)) {
+            if (!element.data.properties[key] || !element.data.properties[key].context || (element.data.properties[key].context === context)) {
                 element.style[key] = value;
                 element.data.properties[key] = { value, context };
             }
