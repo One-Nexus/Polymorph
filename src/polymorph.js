@@ -11,7 +11,7 @@ import getModuleNamespace from './utilities/getModuleNamespace';
  * @param {*} config 
  * @param {*} parentElement 
  */
-export default function polymorph(element, styles, config, globals, parentElement) {
+export default function polymorph(element, styles, config, globals, parentElement, context) {
     // attach repaint methods to parent element
     if (!parentElement && !element.repaint) {
         element.repaint = () => {
@@ -36,7 +36,7 @@ export default function polymorph(element, styles, config, globals, parentElemen
     }
 
     // initialise data interface
-    element.data = element.data || { states: [] };
+    element.data = element.data || { states: [], properties: {} };
 
     // determine parent element
     parentElement = parentElement || element;
@@ -56,7 +56,7 @@ export default function polymorph(element, styles, config, globals, parentElemen
                 const modifier = key.replace('modifier(', '').replace(/\)/g, '');
 
                 if (hasModifier({ element, modifier, modifierGlue, componentGlue })) {
-                    polymorph(element, value, false, globals, parentElement);
+                    polymorph(element, value, false, globals, parentElement, modifier);
                 }
             }
 
@@ -133,7 +133,10 @@ export default function polymorph(element, styles, config, globals, parentElemen
             }
 
             else if (typeof value === 'function') {
-                element.style[key] = value(element.style[key]);
+                if (!element.data.properties[key] || (element.data.properties[key].context === context)) {
+                    element.style[key] = value(element.style[key]);
+                    element.data.properties[key] = { value: value(element.style[key]), context };
+                }
             }
 
             else {
@@ -142,7 +145,10 @@ export default function polymorph(element, styles, config, globals, parentElemen
         }
 
         else {
-            element.style[key] = value;
+            if (!element.data.properties[key] || (element.data.properties[key].context === context)) {
+                element.style[key] = value;
+                element.data.properties[key] = { value, context };
+            }
         }
     }
 
