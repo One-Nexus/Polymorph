@@ -14,8 +14,15 @@ import getModuleNamespace from './utilities/getModuleNamespace';
 export default function polymorph(element, styles, config, globals, parentElement, context) {
     // attach repaint methods to parent element
     if (!parentElement && !element.repaint) {
-        element.repaint = () => {
-            element.style.cssText = null;
+        element.repaint = custom => {
+            const options = Object.assign({
+                clean: true
+            }, custom);
+
+            if (options.clean) {
+                // element.style.cssText = null;
+                // element.getComponents().forEach(k => k.style.cssText = null);
+            }
 
             polymorph(element, styles, config, globals);
 
@@ -54,6 +61,8 @@ export default function polymorph(element, styles, config, globals, parentElemen
         if (typeof value === 'function' || typeof value === 'object') {
             if (key.indexOf('modifier(') > -1) {
                 const modifier = key.replace('modifier(', '').replace(/\)/g, '');
+
+                console.log(key, modifier, hasModifier({ element, modifier, modifierGlue, componentGlue }));
 
                 if (hasModifier({ element, modifier, modifierGlue, componentGlue })) {
                     polymorph(element, value, false, globals, parentElement, modifier);
