@@ -1,6 +1,10 @@
 import hasModifier from './utilities/hasModifier';
-import getComponents from './utilities/getComponents';
+// import getComponents from './utilities/getComponents';
 import getModuleNamespace from './utilities/getModuleNamespace';
+
+function getComponents() {
+    return false;
+}
 
 /**
  * Set a module's styles on a DOM element instance
@@ -16,13 +20,17 @@ export default function polymorph(element, styles, config, globals, parentElemen
     if (!parentElement && !element.repaint) {
         element.repaint = custom => {
             const options = Object.assign({
-                clean: true
+                clean: false
             }, custom);
 
             if (options.clean) {
-                // element.style.cssText = null;
-                // element.getComponents().forEach(k => k.style.cssText = null);
+                element.style.cssText = null;
+                element.getComponents().forEach(k => k.style.cssText = null);
             }
+
+            element.data.properties = {};
+
+            element.getComponents().forEach(component => component.data = null);
 
             polymorph(element, styles, config, globals);
 
@@ -52,8 +60,9 @@ export default function polymorph(element, styles, config, globals, parentElemen
     const modifierGlue = (config && config.modifierGlue) || (window.Synergy && Synergy.modifierGlue) || '-';
 
     for (let [key, value] of Object.entries(values)) {
-        const subComponent = [...element.querySelectorAll(`[class*="${componentGlue + key}"]`)].filter(subComponent => {
-            return [...subComponent.classList].some(className => {
+        // @TODO get components/subcomponents properly
+        const subComponent = [...element.querySelectorAll(`[class*="${componentGlue + key}"]`)].filter(sub => {
+            return [...sub.classList].some(className => {
                 return className.indexOf(getModuleNamespace(parentElement, componentGlue, modifierGlue)) === 0
             });
         });
@@ -61,8 +70,6 @@ export default function polymorph(element, styles, config, globals, parentElemen
         if (typeof value === 'function' || typeof value === 'object') {
             if (key.indexOf('modifier(') > -1) {
                 const modifier = key.replace('modifier(', '').replace(/\)/g, '');
-
-                console.log(key, modifier, hasModifier({ element, modifier, modifierGlue, componentGlue }));
 
                 if (hasModifier({ element, modifier, modifierGlue, componentGlue })) {
                     polymorph(element, value, false, globals, parentElement, modifier);
@@ -98,8 +105,10 @@ export default function polymorph(element, styles, config, globals, parentElemen
             }
 
             // if target element contains child components matching `key`
+            // @TODO this doesn't seem to find components, rather the below
+            // subComponents condition does
             else if (getComponents({ element, componentName: key, componentGlue }).length) {
-                getComponents({ element, componentName: key, componentGlue }).forEach(_component => {
+                getComponents({ element, componentName: key, componentGlue, parentElement }).forEach(_component => {
                     if (typeof value === 'object') {
                         polymorph(_component, value, false, globals, parentElement);
                     } 
@@ -109,26 +118,37 @@ export default function polymorph(element, styles, config, globals, parentElemen
                 });
             }
 
+            // @TODO this seems to find regular components, not just subComponents
             else if (subComponent.length) {
-                [...subComponent].forEach(query => polymorph(query, value, false, globals, parentElement));
+                [...subComponent].forEach(query => {
+                    // @TODO this condition will need to be duplicated for regular
+                    // components when you fix them
+                    if (query.closest(`[data-module=${getModuleNamespace(parentElement, componentGlue, modifierGlue)}]`) === parentElement) {
+                        polymorph(query, value, false, globals, parentElement);
+                    }
+                });
             }
 
             else if (key === ':hover') {
-                const hoverState = JSON.stringify(value);
+                const isHoverState = parentElement.data.states.some(state => {
+                    return state.type === 'mouseenter' && state.element === element;
+                });
 
-                if (!element.data.states.includes(hoverState)) {
-                    element.data.states.push(hoverState);
+                if (!isHoverState) {
+                    parentElement.data.states.push({ type: 'mouseenter', element });
 
                     element.addEventListener('mouseenter', function mouseEnter() {
-                        polymorph(element, value, false, globals, parentElement);
-
                         element.removeEventListener('mouseenter', mouseEnter);
+
+                        polymorph(element, value, false, globals, parentElement);
                     }, false);
 
                     element.addEventListener('mouseleave', function mouseLeave() {
                         element.removeEventListener('mouseleave', mouseLeave);
 
-                        element.data.states = element.data.states.filter(item => item !== hoverState);
+                        parentElement.data.states = parentElement.data.states.filter(state => {
+                            return !(state.type === 'mouseenter' && state.element === element);
+                        });
 
                         parentElement.repaint();
                     }, false);
@@ -154,6 +174,10 @@ export default function polymorph(element, styles, config, globals, parentElemen
         }
 
         else {
+            if (element.classList.contains('dot')) {
+                // console.log(element, element.data, key, value, context);
+            }
+
             if (!element.data.properties[key] || !element.data.properties[key].context || (element.data.properties[key].context === context)) {
                 element.style[key] = value;
                 element.data.properties[key] = { value, context };
