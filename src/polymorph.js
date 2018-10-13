@@ -21,19 +21,51 @@ export default function polymorph(element, styles, config, globals, parentElemen
      */
     if (!parentElement && !element.repaint) {
         element.repaint = custom => {
+            /**
+             * Merge default + custom options
+             */
             const options = Object.assign({
                 clean: false
             }, custom);
 
+            const components = getComponents.bind({ 
+                DOMNodes: element, 
+                componentGlue, 
+                modifierGlue, 
+                parentElement: element 
+            })();
+
+            /**
+             * Remove styles that were not added by polymorph
+             */
             if (options.clean) {
                 element.style.cssText = null;
-                element.getComponents().forEach(k => k.style.cssText = null);
+                components.forEach(component => component.style.cssText = null);
             }
+
+            /**
+             * Clean parent element/module
+             */
+            element.data && Object.keys(element.data.properties).forEach(property => {
+                element.style[property] = null
+            });
 
             element.data.properties = {};
 
-            element.getComponents().forEach(component => component.data = null);
+            /**
+             * Clean child components
+             */
+            components.forEach(component => {
+                component.data && Object.keys(component.data.properties).forEach(property => {
+                    component.style[property] = null
+                });
 
+                component.data = null
+            });
+
+            /**
+             * Repaint the module
+             */
             polymorph(element, styles, config, globals);
 
             element.dispatchEvent(new Event('moduledidrepaint'));
