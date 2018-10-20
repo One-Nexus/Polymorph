@@ -1,4 +1,5 @@
 import isValidCssProperty from './utilities/isValidCssProperty';
+import handleState from './utilities/handleState';
 import { getComponents, getSubComponents, hasModifier } from '../../sQuery/src/api';
 
 /**
@@ -6,8 +7,8 @@ import { getComponents, getSubComponents, hasModifier } from '../../sQuery/src/a
  * 
  * @param {*} element 
  * @param {*} styles 
- * @param {*} globals 
  * @param {*} config 
+ * @param {*} globals 
  * @param {*} parentElement 
  * @param {*} context 
  */
@@ -28,6 +29,9 @@ export default function polymorph(element, styles, config, globals, parentElemen
                 clean: false
             }, custom);
 
+            /**
+             * Get child components
+             */
             const components = getComponents.bind({ 
                 DOMNodes: element, 
                 componentGlue, 
@@ -60,7 +64,7 @@ export default function polymorph(element, styles, config, globals, parentElemen
                     component.style[property] = null
                 });
 
-                component.data = null
+                component.data = null;
             });
 
             /**
@@ -122,28 +126,6 @@ export default function polymorph(element, styles, config, globals, parentElemen
             }
 
             /**
-             * Handle module `group` and `wrapper`
-             */
-            else if (key === 'group' || key === 'wrapper') {
-                // @TODO this currently runs for each item in the group/wrapper,
-                // should ideally run just once per group/wrapper
-                element.parentNode.classList.forEach(className => {
-                    if (className.indexOf('group') === 0 || className.indexOf('wrapper') === 0) {
-                        const wrapperValues = (typeof value === 'object') ? value : value(element.parentNode);
-                        const childValues = (typeof value === 'object') ? value : value(element);
-
-                        // apply styles to wrapper/group element
-                        polymorph(element.parentNode, wrapperValues, false, globals, parentElement);
-
-                        // apply styles to child modules
-                        polymorph(element, childValues, false, globals, parentElement);
-                    }
-                });
-
-                return;
-            }
-
-            /**
              * Handle `components`
              */
             else if (matchedComponents.length) {
@@ -158,6 +140,28 @@ export default function polymorph(element, styles, config, globals, parentElemen
             }
 
             /**
+             * Handle module `group` and `wrapper`
+             */
+            else if (key === 'group' || key === 'wrapper') {
+                // @TODO this currently runs for each item in the group/wrapper,
+                // should ideally run just once per group/wrapper
+                element.parentNode.classList.forEach(className => {
+                    if (className.indexOf('group') === 0 || className.indexOf('wrapper') === 0) {
+                        const wrapperValues = (typeof value === 'object') ? value : value(element.parentNode);
+                        const childValues   = (typeof value === 'object') ? value : value(element);
+
+                        // apply styles to wrapper/group element
+                        polymorph(element.parentNode, wrapperValues, false, globals, parentElement);
+
+                        // apply styles to child modules
+                        polymorph(element, childValues, false, globals, parentElement);
+                    }
+                });
+
+                return;
+            }
+
+            /**
              * Handle `sub-components`
              */
             else if (matchedSubComponents.length) {
@@ -168,29 +172,14 @@ export default function polymorph(element, styles, config, globals, parentElemen
              * Handle `hover` interaction
              */
             else if (key === ':hover') {
-                const isHoverState = parentElement.data.states.some(state => {
-                    return state.type === 'mouseenter' && state.element === element;
-                });
+                handleState(parentElement, element, ['mouseenter', 'mouseleave'], value, globals);
+            }
 
-                if (!isHoverState) {
-                    parentElement.data.states.push({ type: 'mouseenter', element });
-
-                    element.addEventListener('mouseenter', function mouseEnter() {
-                        element.removeEventListener('mouseenter', mouseEnter);
-
-                        polymorph(element, value, false, globals, parentElement);
-                    }, false);
-
-                    element.addEventListener('mouseleave', function mouseLeave() {
-                        element.removeEventListener('mouseleave', mouseLeave);
-
-                        parentElement.data.states = parentElement.data.states.filter(state => {
-                            return !(state.type === 'mouseenter' && state.element === element);
-                        });
-
-                        parentElement.repaint();
-                    }, false);
-                }
+            /**
+             * Handle `focus` interaction
+             */
+            else if (key === ':focus') {
+                handleState(parentElement, element, ['focus', 'blur'], value, globals);
             }
 
             /**
@@ -211,9 +200,6 @@ export default function polymorph(element, styles, config, globals, parentElemen
                     if (isValidCssProperty(key)) {
                         element.style[key] = value(element.style[key]);
                         element.data.properties[key] = { value: value(element.style[key]), context };
-                    } 
-                    else {
-                        // @TODO handle condition (what is it?)
                     }
                 }
                 else {
@@ -230,12 +216,12 @@ export default function polymorph(element, styles, config, globals, parentElemen
          * Handle CSS property
          */
         else {
-            if (!element.data.properties[key] || !element.data.properties[key].context || (element.data.properties[key].context === context)) {
+            const props = element.data.properties;
+
+            if (!props[key] || !props[key].context || (props[key].context === context)) {
                 element.style[key] = value;
-                element.data.properties[key] = { value, context };
-            }
-            else {
-                // @TODO handle condition (what is it?)
+
+                props[key] = { value, context };
             }
         }
     }
