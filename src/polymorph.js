@@ -1,5 +1,4 @@
 import isValidCssProperty from './utilities/isValidCssProperty';
-import handleState from './utilities/handleState';
 import { getComponents, getSubComponents, hasModifier } from '../../sQuery/src/api';
 
 /**
@@ -172,14 +171,62 @@ export default function polymorph(element, styles, config, globals, parentElemen
              * Handle `hover` interaction
              */
             else if (key === ':hover') {
-                handleState(parentElement, element, ['mouseenter', 'mouseleave'], value, globals);
+                // handleState(parentElement, element, ['mouseenter', 'mouseleave'], value, globals);
+
+                const isHoverState = parentElement.data.states.some(state => {
+                    return state.type === 'mouseenter' && state.element === element;
+                });
+
+                if (!isHoverState) {
+                    parentElement.data.states.push({ type: 'mouseenter', element });
+
+                    element.addEventListener('mouseenter', function mouseEnter() {
+                        element.removeEventListener('mouseenter', mouseEnter);
+
+                        polymorph(element, value, false, globals, parentElement);
+                    }, false);
+
+                    element.addEventListener('mouseleave', function mouseLeave() {
+                        element.removeEventListener('mouseleave', mouseLeave);
+
+                        parentElement.data.states = parentElement.data.states.filter(state => {
+                            return !(state.type === 'mouseenter' && state.element === element);
+                        });
+
+                        parentElement.repaint();
+                    }, false);
+                }
             }
 
             /**
              * Handle `focus` interaction
              */
             else if (key === ':focus') {
-                handleState(parentElement, element, ['focus', 'blur'], value, globals);
+                // handleState(parentElement, element, ['focus', 'blur'], value, globals);
+
+                const isFocusState = parentElement.data.states.some(state => {
+                    return state.type === 'focus' && state.element === element;
+                });
+
+                if (!isFocusState) {
+                    parentElement.data.states.push({ type: 'focus', element });
+
+                    element.addEventListener('focus', function focus() {
+                        element.removeEventListener('focus', focus);
+
+                        polymorph(element, value, false, globals, parentElement);
+                    }, true);
+
+                    element.addEventListener('blur', function blur() {
+                        element.removeEventListener('blur', blur);
+
+                        parentElement.data.states = parentElement.data.states.filter(state => {
+                            return !(state.type === 'focus' && state.element === element);
+                        });
+
+                        parentElement.repaint();
+                    }, true);
+                }
             }
 
             /**
