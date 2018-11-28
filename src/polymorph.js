@@ -11,7 +11,7 @@ import { getComponents, getSubComponents, hasModifier } from '../../sQuery/src/a
  * @param {*} parentElement 
  * @param {*} context 
  */
-export default function polymorph(element, styles, config, globals, parentElement, context) {
+export default function polymorph(element, styles = {}, config, globals, parentElement, context) {
     const values = (typeof styles === 'object') ? styles : styles(element, config, globals);
     const componentGlue = (config && config.componentGlue) || (window.Synergy && Synergy.componentGlue) || '_';
     const modifierGlue  = (config && config.modifierGlue)  || (window.Synergy && Synergy.modifierGlue)  || '-';
@@ -106,7 +106,6 @@ export default function polymorph(element, styles, config, globals, parentElemen
      */
     for (let [key, value] of Object.entries(values)) {
         const matchedComponents = getComponents.bind({ DOMNodes: element, componentGlue, modifierGlue, parentElement })(key);
-        const matchedSubComponents = []; // @TODO
 
         /**
          * Handle object of CSS properties / function that will return an object
@@ -139,6 +138,27 @@ export default function polymorph(element, styles, config, globals, parentElemen
             }
 
             /**
+             * Handle `sub-components`
+             */
+            else if (key.indexOf('subComponent(') > -1) {
+                const subComponent = key.replace('subComponent(', '').replace(/\)/g, '');
+                const subComponents = getSubComponents.bind({ DOMNodes: element, componentGlue, modifierGlue, parentElement })(subComponent);
+
+                if (subComponents.length) {
+                    subComponents.forEach(_component => {
+                        if (typeof value === 'object') {
+                            polymorph(_component, value, false, globals, parentElement);
+                        } 
+                        else if (typeof value === 'function') {
+                            polymorph(_component, value(_component), false, globals, parentElement);
+                        }  
+                    });
+                }
+
+                return;
+            }
+
+            /**
              * Handle module `group` and `wrapper`
              */
             else if (key === 'group' || key === 'wrapper') {
@@ -158,13 +178,6 @@ export default function polymorph(element, styles, config, globals, parentElemen
                 });
 
                 return;
-            }
-
-            /**
-             * Handle `sub-components`
-             */
-            else if (matchedSubComponents.length) {
-                // @TODO
             }
 
             /**
@@ -196,6 +209,13 @@ export default function polymorph(element, styles, config, globals, parentElemen
                         parentElement.repaint();
                     }, false);
                 }
+            }
+
+            /**
+             * Handle `before` pseudo element
+             */
+            else if (key === ':before') {
+                console.log(value);
             }
 
             /**
@@ -281,5 +301,5 @@ export default function polymorph(element, styles, config, globals, parentElemen
     }
 }
 
-// @TODO since switching to sQuery hasModifer, this will need slight tweak
+// @TODO since switching to sQuery's hasModifer, this will need slight tweak
 // polymorph.modifier = hasModifier;
