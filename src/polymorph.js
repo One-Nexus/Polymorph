@@ -3,15 +3,8 @@ import { getComponents, getSubComponents, hasModifier } from '../../sQuery/src/a
 
 /**
  * Set a module's styles on a DOM element instance
- * 
- * @param {*} element 
- * @param {*} styles 
- * @param {*} config 
- * @param {*} globals 
- * @param {*} parentElement 
- * @param {*} context 
  */
-export default function polymorph(element, styles = {}, config, globals, parentElement, context) {
+export default function polymorph(element, styles = {}, config, globals, parentElement, specificity = 0) {
     const values = (typeof styles === 'object') ? styles : styles(element, config, globals);
     const componentGlue = (config && config.componentGlue) || (window.Synergy && Synergy.componentGlue) || '_';
     const modifierGlue  = (config && config.modifierGlue)  || (window.Synergy && Synergy.modifierGlue)  || '-';
@@ -79,7 +72,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
      * Handle array of top-level rule sets/stylesheets
      */
     if (styles.constructor === Array) {
-        return styles.forEach(stylesheet => polymorph(element, stylesheet, config, globals, parentElement, context));
+        return styles.forEach(stylesheet => polymorph(element, stylesheet, config, globals, parentElement, specificity));
     }
 
     /**
@@ -119,7 +112,9 @@ export default function polymorph(element, styles = {}, config, globals, parentE
                 const modifier = key.replace('modifier(', '').replace(/\)/g, '');
 
                 if (hasModifier.bind({ DOMNodes: element, componentGlue, modifierGlue })(modifier)) {
-                    polymorph(element, value, false, globals, parentElement, modifier);
+                    specificity++;
+
+                    polymorph(element, value, false, globals, parentElement, specificity);
                 }
             }
 
@@ -255,7 +250,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
              */
             else if (value instanceof Array) {
                 if (value[0] instanceof HTMLElement) {
-                    polymorph(value[0], value[1], false, globals, parentElement, context);
+                    polymorph(value[0], value[1], false, globals, parentElement, specificity);
                 }
             }
 
@@ -263,10 +258,10 @@ export default function polymorph(element, styles = {}, config, globals, parentE
              * Handle case where CSS `value` to be applied to `element` is a function
              */
             else if (typeof value === 'function') {
-                if (!element.data.properties[key] || (element.data.properties[key].context === context)) {
+                if (!element.data.properties[key] || (element.data.properties[key].specificity < specificity)) {
                     if (isValidCssProperty(key)) {
                         element.style[key] = value(element.style[key]);
-                        element.data.properties[key] = { value: value(element.style[key]), context };
+                        element.data.properties[key] = { value: value(element.style[key]), specificity };
                     }
                 }
                 else {
@@ -285,10 +280,10 @@ export default function polymorph(element, styles = {}, config, globals, parentE
         else {
             const props = element.data.properties;
 
-            if (!props[key] || !props[key].context || (props[key].context === context)) {
+            if (!props[key] || !props[key].specificity || (props[key].specificity < specificity)) {
                 element.style[key] = value;
 
-                props[key] = { value, context };
+                props[key] = { value, specificity };
             }
         }
     }
