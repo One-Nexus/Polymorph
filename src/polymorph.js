@@ -32,6 +32,16 @@ export default function polymorph(element, styles = {}, config, globals, parentE
             })();
 
             /**
+             * Get child sub-components
+             */
+            const subComponents = getSubComponents.bind({ 
+                DOMNodes: element, 
+                componentGlue, 
+                modifierGlue, 
+                parentElement: element 
+            })();
+
+            /**
              * Remove styles that were not added by polymorph
              */
             if (options.clean) {
@@ -52,6 +62,17 @@ export default function polymorph(element, styles = {}, config, globals, parentE
              * Clean child components
              */
             components.forEach(component => {
+                component.data && Object.keys(component.data.properties).forEach(property => {
+                    component.style[property] = null
+                });
+
+                component.data = null;
+            });
+
+            /**
+             * Clean child sub-components
+             */
+            subComponents.forEach(component => {
                 component.data && Object.keys(component.data.properties).forEach(property => {
                     component.style[property] = null
                 });
