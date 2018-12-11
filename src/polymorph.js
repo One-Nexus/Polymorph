@@ -245,11 +245,11 @@ export default function polymorph(element, styles = {}, config, globals, parentE
                 // handleState(parentElement, element, ['mouseenter', 'mouseleave'], value, globals);
 
                 const isHoverState = parentElement.data.states.some(state => {
-                    return state.type === 'mouseenter' && state.element === element;
+                    return state.type === 'mouseenter' && state.element === element && state.value === JSON.stringify(value);
                 });
 
                 if (!isHoverState) {
-                    parentElement.data.states.push({ type: 'mouseenter', element });
+                    parentElement.data.states.push({ type: 'mouseenter', element, value: JSON.stringify(value) });
 
                     element.addEventListener('mouseenter', function mouseEnter() {
                         element.removeEventListener('mouseenter', mouseEnter);
@@ -261,7 +261,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
                         element.removeEventListener('mouseleave', mouseLeave);
 
                         parentElement.data.states = parentElement.data.states.filter(state => {
-                            return !(state.type === 'mouseenter' && state.element === element);
+                            return !(state.type === 'mouseenter' && state.element === element && state.value === JSON.stringify(value));
                         });
 
                         parentElement.repaint();
