@@ -1,5 +1,5 @@
 import isValidCssProperty from './utilities/isValidCssProperty';
-import { getComponents, getSubComponents, hasModifier } from '../../sQuery/src/api';
+import { getComponents, getSubComponents, hasModifier } from '../../../sQuery/sQuery/src/api';
 
 /**
  * Set a module's styles on a DOM element instance
@@ -242,8 +242,6 @@ export default function polymorph(element, styles = {}, config, globals, parentE
              * Handle `hover` interaction
              */
             else if (key === ':hover') {
-                // handleState(parentElement, element, ['mouseenter', 'mouseleave'], value, globals);
-
                 const isHoverState = parentElement.data.states.some(state => {
                     return state.type === 'mouseenter' && state.element === element && state.value === JSON.stringify(value);
                 });
@@ -314,6 +312,10 @@ export default function polymorph(element, styles = {}, config, globals, parentE
             else if (value instanceof Array) {
                 if (value[0] instanceof HTMLElement) {
                     polymorph(value[0], value[1], false, globals, parentElement, specificity);
+                }
+
+                if (value[0] instanceof NodeList) {
+                    value[0].forEach(node => polymorph(node, value[1], false, globals, parentElement, specificity))
                 }
             }
 
