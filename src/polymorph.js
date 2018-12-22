@@ -1,3 +1,4 @@
+import { inspect } from 'util';
 import isValidCssProperty from './utilities/isValidCssProperty';
 import { getComponents, getSubComponents, hasModifier } from '../../../sQuery/sQuery/src/api';
 
@@ -243,11 +244,11 @@ export default function polymorph(element, styles = {}, config, globals, parentE
              */
             else if (key === ':hover') {
                 const isHoverState = parentElement.data.states.some(state => {
-                    return state.type === 'mouseenter' && state.element === element && state.value === JSON.stringify(value);
+                    return state.type === 'mouseenter' && state.element === element && state.value === JSON.stringify(inspect(value));
                 });
 
                 if (!isHoverState) {
-                    parentElement.data.states.push({ type: 'mouseenter', element, value: JSON.stringify(value) });
+                    parentElement.data.states.push({ type: 'mouseenter', element, value: JSON.stringify(inspect(value)) });
 
                     element.addEventListener('mouseenter', function mouseEnter() {
                         element.removeEventListener('mouseenter', mouseEnter);
@@ -259,7 +260,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
                         element.removeEventListener('mouseleave', mouseLeave);
 
                         parentElement.data.states = parentElement.data.states.filter(state => {
-                            return !(state.type === 'mouseenter' && state.element === element && state.value === JSON.stringify(value));
+                            return !(state.type === 'mouseenter' && state.element === element && state.value === JSON.stringify(inspect(value)));
                         });
 
                         parentElement.repaint();
