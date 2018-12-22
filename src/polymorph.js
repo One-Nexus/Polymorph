@@ -170,9 +170,23 @@ export default function polymorph(element, styles = {}, config, globals, parentE
          */
         if (typeof value === 'function' || typeof value === 'object') {
             /**
+             * Handle case where desired element for styles to be applied needs to be
+             * manually controlled
+             */
+            if (value instanceof Array) {
+                if (value[0] instanceof HTMLElement) {
+                    polymorph(value[0], value[1], false, globals, parentElement, specificity);
+                }
+
+                if (value[0] instanceof NodeList) {
+                    value[0].forEach(node => polymorph(node, value[1], false, globals, parentElement, specificity))
+                }
+            }
+    
+            /**
              * Handle `modifiers`
              */
-            if (key.indexOf('modifier(') > -1) {
+            else if (key.indexOf('modifier(') > -1) {
                 const modifier = key.replace('modifier(', '').replace(/\)/g, '');
 
                 if (hasModifier.bind({ DOMNodes: element, componentGlue, modifierGlue })(modifier)) {
@@ -303,20 +317,6 @@ export default function polymorph(element, styles = {}, config, globals, parentE
 
                         parentElement.repaint();
                     }, true);
-                }
-            }
-
-            /**
-             * Handle case where desired element for styles to be applied needs to be
-             * manually controlled
-             */
-            else if (value instanceof Array) {
-                if (value[0] instanceof HTMLElement) {
-                    polymorph(value[0], value[1], false, globals, parentElement, specificity);
-                }
-
-                if (value[0] instanceof NodeList) {
-                    value[0].forEach(node => polymorph(node, value[1], false, globals, parentElement, specificity))
                 }
             }
 
