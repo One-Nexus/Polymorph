@@ -258,23 +258,23 @@ export default function polymorph(element, styles = {}, config, globals, parentE
              */
             else if (key === ':hover') {
                 const isHoverState = parentElement.data.states.some(state => {
-                    return state.type === 'mouseenter' && state.element === element && state.value === JSON.stringify(inspect(value));
+                    return state.type === 'mouseover' && state.element === element && state.value === JSON.stringify(inspect(value));
                 });
 
                 if (!isHoverState) {
-                    parentElement.data.states.push({ type: 'mouseenter', element, value: JSON.stringify(inspect(value)) });
+                    parentElement.data.states.push({ type: 'mouseover', element, value: JSON.stringify(inspect(value)) });
 
-                    element.addEventListener('mouseenter', function mouseEnter() {
-                        element.removeEventListener('mouseenter', mouseEnter);
+                    element.addEventListener('mouseover', function mouseover() {
+                        element.removeEventListener('mouseover', mouseover);
 
                         polymorph(element, value, false, globals, parentElement);
                     }, false);
 
-                    element.addEventListener('mouseleave', function mouseLeave() {
-                        element.removeEventListener('mouseleave', mouseLeave);
+                    element.addEventListener('mouseout', function mouseout() {
+                        element.removeEventListener('mouseout', mouseout);
 
                         parentElement.data.states = parentElement.data.states.filter(state => {
-                            return !(state.type === 'mouseenter' && state.element === element && state.value === JSON.stringify(inspect(value)));
+                            return !(state.type === 'mouseover' && state.element === element && state.value === JSON.stringify(inspect(value)));
                         });
 
                         parentElement.repaint();
