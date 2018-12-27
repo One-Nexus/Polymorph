@@ -163,6 +163,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
      */
     for (let [key, value] of Object.entries(values)) {
         const matchedComponents = getComponents.bind({ DOMNodes: element, componentGlue, modifierGlue, parentElement })(key);
+        const matchedSubComponents = getSubComponents.bind({ DOMNodes: element, componentGlue, modifierGlue, parentElement })(key);
 
         /**
          * Handle object of CSS properties / function that will return an object
@@ -197,16 +198,16 @@ export default function polymorph(element, styles = {}, config, globals, parentE
             }
 
             /**
-             * Handle `components`
+             * Smart handle `components`
              */
             else if (matchedComponents.length) {
                 matchedComponents.forEach(_component => {
                     if (typeof value === 'object') {
                         polymorph(_component, value, false, globals, parentElement);
-                    } 
+                    }
                     else if (typeof value === 'function') {
                         polymorph(_component, value(_component), false, globals, parentElement);
-                    }                  
+                    }
                 });
             }
 
@@ -229,6 +230,20 @@ export default function polymorph(element, styles = {}, config, globals, parentE
                 }
 
                 return;
+            }
+
+            /**
+             * Smart handle `sub-components`
+             */
+            else if (matchedSubComponents.length) {
+                matchedSubComponents.forEach(_component => {
+                    if (typeof value === 'object') {
+                        polymorph(_component, value, false, globals, parentElement);
+                    }
+                    else if (typeof value === 'function') {
+                        polymorph(_component, value(_component), false, globals, parentElement);
+                    }
+                });
             }
 
             /**
