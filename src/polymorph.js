@@ -236,6 +236,16 @@ export default function polymorph(element, styles = {}, config, globals, parentE
              * Smart handle `sub-components`
              */
             else if (matchedSubComponents.length) {
+                if (value.disableCascade) {
+                    matchedSubComponents = matchedSubComponents.filter(subComponent => {
+                        if (!element.getAttribute('data-component')) {
+                            console.warn(`${element} does not have data-component attribute so disableCascade option in ${value} will not reliably work`);
+                        }
+
+                        return element === subComponent.parent(element.getAttribute('data-component'));
+                    });
+                }
+
                 matchedSubComponents.forEach(_component => {
                     if (typeof value === 'object') {
                         polymorph(_component, value, false, globals, parentElement);
