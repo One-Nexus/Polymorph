@@ -401,5 +401,16 @@ export default function polymorph(element, styles = {}, config, globals, parentE
     }
 }
 
-// @TODO since switching to sQuery's hasModifer, this will need slight tweak
-// polymorph.modifier = hasModifier;
+/**
+ * Wrapper for sQuery `hasModifier()`
+ */
+polymorph.modifier = (element, modifier, modifierGlue, componentGlue) => {
+    modifierGlue  = modifierGlue  || (window.Synergy && Synergy.modifierGlue)  || '-';
+    componentGlue = componentGlue || (window.Synergy && Synergy.componentGlue) || '_';
+
+    return hasModifier.bind({ 
+        DOMNodes: element,
+        modifierGlue: modifierGlue,
+        componentGlue: componentGlue
+    })(modifier);
+}
