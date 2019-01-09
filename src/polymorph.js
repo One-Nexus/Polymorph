@@ -128,8 +128,14 @@ export default function polymorph(element, styles = {}, config, globals, parentE
              */
             polymorph(element, styles, config, globals);
 
+            if (element.repaint.states.length) {
+                element.repaint.states.forEach(style => style());
+            }
+
             element.dispatchEvent(new Event('moduledidrepaint'));
         };
+
+        element.repaint.states = [];
     }
 
     /**
@@ -287,10 +293,16 @@ export default function polymorph(element, styles = {}, config, globals, parentE
                 });
 
                 if (!isHoverState) {
-                    parentElement.data.states.push({ type: 'mouseover', element, value: JSON.stringify(inspect(value)) });
+                    parentElement.data.states.push({ 
+                        type: 'mouseover', 
+                        element: element, 
+                        value: JSON.stringify(inspect(value)) 
+                    });
 
                     element.addEventListener('mouseover', function mouseover() {
                         element.removeEventListener('mouseover', mouseover);
+
+                        parentElement.repaint.states.push(() => polymorph(element, value, false, globals, parentElement));
 
                         polymorph(element, value, false, globals, parentElement);
                     }, false);
@@ -301,6 +313,8 @@ export default function polymorph(element, styles = {}, config, globals, parentE
                         parentElement.data.states = parentElement.data.states.filter(state => {
                             return !(state.type === 'mouseover' && state.element === element && state.value === JSON.stringify(inspect(value)));
                         });
+
+                        parentElement.repaint.states = [];
 
                         parentElement.repaint();
                     }, false);
