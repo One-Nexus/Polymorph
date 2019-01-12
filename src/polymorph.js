@@ -1,6 +1,6 @@
-import { inspect } from 'util';
 import isValidCssProperty from './utilities/isValidCssProperty';
-import { getComponents, getSubComponents, hasModifier } from '../../../sQuery/sQuery/src/api';
+import { getComponents, getSubComponents, hasModifier, parent } from '../../../sQuery/sQuery/src/api';
+import stringifyState from './utilities/stringifyState';
 
 /**
  * Set a module's styles on a DOM element instance
@@ -248,7 +248,21 @@ export default function polymorph(element, styles = {}, config, globals, parentE
                             console.warn(`${element} does not have data-component attribute so disableCascade option in ${value} will not reliably work`);
                         }
 
-                        return element === subComponent.parent(element.getAttribute('data-component'));
+                        const componentName = element.getAttribute('data-component') || [...element.classList].reduce((accumulator, currentValue) => {
+                            if (currentValue.indexOf(componentGlue) > 1) {
+                                currentValue = currentValue.substring(currentValue.lastIndexOf(componentGlue) + 1, currentValue.length);
+
+                                return currentValue.substring(0, currentValue.indexOf(modifierGlue));
+                            }
+                        }, []);
+
+                        const parentSubComponent = parent.bind({ 
+                            DOMNodes: subComponent,
+                            modifierGlue: modifierGlue,
+                            componentGlue: componentGlue
+                        })(componentName);
+
+                        return element === parentSubComponent;
                     });
                 }
 
@@ -288,15 +302,17 @@ export default function polymorph(element, styles = {}, config, globals, parentE
              * Handle `hover` interaction
              */
             else if (key === ':hover') {
+                const stringifiedState = stringifyState(values);
+
                 const isHoverState = parentElement.data.states.some(state => {
-                    return state.type === 'mouseover' && state.element === element && state.value === JSON.stringify(inspect(value));
+                    return state.type === 'mouseover' && state.element === element && state.value === stringifiedState;
                 });
 
                 if (!isHoverState) {
                     parentElement.data.states.push({ 
                         type: 'mouseover', 
                         element: element, 
-                        value: JSON.stringify(inspect(value)) 
+                        value: stringifiedState 
                     });
 
                     element.addEventListener('mouseover', function mouseover() {
@@ -311,7 +327,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
                         element.removeEventListener('mouseout', mouseout);
 
                         parentElement.data.states = parentElement.data.states.filter(state => {
-                            return !(state.type === 'mouseover' && state.element === element && state.value === JSON.stringify(inspect(value)));
+                            return !(state.type === 'mouseover' && state.element === element && state.value === stringifiedState);
                         });
 
                         parentElement.repaint.states = [];
@@ -324,9 +340,9 @@ export default function polymorph(element, styles = {}, config, globals, parentE
             /**
              * Handle `before` pseudo element
              */
-            else if (key === ':before') {
-                console.log(value);
-            }
+            // else if (key === ':before') {
+            //     console.log(value);
+            // }
 
             /**
              * Handle `focus` interaction

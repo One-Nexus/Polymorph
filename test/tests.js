@@ -66,19 +66,24 @@ describe('Polymorph function', () => {
             beforeEach('setup DOM elements', () => {
                 document.body.innerHTML = (`
                     <div class="foo" id="SVRNE">
-                        <div id="HH156"></div>
+                        <div class="bar" id="HH156"></div>
+                        <div class="bar" id="HRJM1"></div>
                     </div>
                 `);
     
                 polymorph(document.getElementById('SVRNE'), () => ({
-                    'foo': [document.getElementById('HH156'), {
+                    'fizz': [document.getElementById('HH156'), {
                         'color': 'red'
+                    }],
+                    'buzz': [document.querySelectorAll('.bar'), {
+                        'height': '20px'
                     }]
                 }));
             });
     
             it('should apply the styles to the element', () => {
-                assert.equal(document.getElementById('HH156').getAttribute('style'), 'color: red;');
+                assert.equal(document.getElementById('HH156').getAttribute('style'), 'color: red; height: 20px;');
+                assert.equal(document.getElementById('HRJM1').getAttribute('style'), 'height: 20px;');
             });
         });
 
@@ -212,43 +217,137 @@ describe('Polymorph function', () => {
 
                 polymorph(document.getElementById('SVRNE'), {
                     'alpha': {
-                        'beta': {
+                        'subComponent(beta)': {
                             'color': 'blue'
                         }
+                    }
+                });
+
+                polymorph(document.getElementById('SVRNE'), {
+                    'alpha': {
+                        'subComponent(beta)': () => ({
+                            'height': '16px'
+                        })
                     }
                 });
             });
 
             it('should apply the styles to the sub-component', () => {
-                assert.equal(document.getElementById('A0BG9').getAttribute('style'), 'color: blue;');
+                assert.equal(document.getElementById('A0BG9').getAttribute('style'), 'color: blue; height: 16px;');
+            });
+        });
+
+        describe('with styles for a sub-component (smart)', () => {
+            beforeEach('setup DOM elements', () => {
+                document.body.innerHTML = (`
+                    <div class="foo" id="SVRNE">
+                        <div class="foo_alpha" id="HH156">
+                            <div class="foo_alpha_beta" id="A0BG9">
+                                <div class="foo_alpha_beta_gamma" id="HRJM1"></div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+
+                polymorph(document.getElementById('SVRNE'), {
+                    'alpha': {
+                        'beta': {
+                            'color': 'blue'
+                        }
+                    }
+                });
+
+                polymorph(document.getElementById('SVRNE'), {
+                    'alpha': {
+                        'beta': () => ({
+                            'height': '16px'
+                        })
+                    }
+                });
+            });
+
+            it('should apply the styles to the sub-component', () => {
+                assert.equal(document.getElementById('A0BG9').getAttribute('style'), 'color: blue; height: 16px;');
             });
         });
 
         describe('with styles for a hovered element', () => {
             beforeEach('setup DOM elements', () => {
                 document.body.innerHTML = (`
-                    <div class="foo" id="SVRNE"></div>
+                    <div class="foo" id="SVRNE" data-module="foo">
+                        <div class="foo_bar" id="E0RZS" data-component="bar">
+                            <div class="foo_bar_qux" id="HRJM1" data-component="qux">
+                                <div class="foo_bar" data-component="bar">
+                                    <div class="foo_bar_qux" id="A0BG9" data-component="qux"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="foo_bar" id="HH156">
+                            <div class="foo_bar_qux"></div>
+                        </div>
+                    </div>
                 `);
 
                 polymorph(document.getElementById('SVRNE'), {
-                    ':hover': {
+                    bar: {
+                        ':hover': {
+                            'color': 'red',
+        
+                            qux: {
+                                disableCascade: true,
+                                'color': 'blue'
+                            }
+                        }
+                    }
+                });
+
+                document.getElementById('E0RZS').dispatchEvent(new Event('mouseover'));
+                document.getElementById('HH156').dispatchEvent(new Event('mouseover'));
+            });
+
+            it('should apply the styles to the element when hovered', () => {
+                assert.equal(document.getElementById('E0RZS').getAttribute('style'), 'color: red;');
+                assert.equal(document.getElementById('HRJM1').getAttribute('style'), 'color: blue;');
+                assert.equal(document.getElementById('A0BG9').getAttribute('style'), null);
+            });
+
+            describe('after `mouseover` event has already been triggered', () => {
+                beforeEach('setup DOM elements', () => {
+                    document.getElementById('E0RZS').dispatchEvent(new Event('mouseout'));
+                });
+
+                it('should remove the styles from the element when hovered', () => {
+                    assert.equal(document.getElementById('E0RZS').getAttribute('style'), '');
+                    assert.equal(document.getElementById('HRJM1').getAttribute('style'), '');
+                });
+            });
+        });
+
+        describe('with styles for a focused element', () => {
+            beforeEach('setup DOM elements', () => {
+                document.body.innerHTML = (`
+                    <input type="text" class="foo" id="SVRNE" />
+                `);
+
+                polymorph(document.getElementById('SVRNE'), {
+                    ':focus': {
                         'color': 'red'
                     }
                 });
 
-                document.getElementById('SVRNE').dispatchEvent(new Event('mouseenter'));
+                document.getElementById('SVRNE').dispatchEvent(new Event('focus'));
             });
 
-            it('should apply the styles to the element when hovered', () => {
+            it('should apply the styles to the element when focused', () => {
                 assert.equal(document.getElementById('SVRNE').getAttribute('style'), 'color: red;');
             });
 
-            describe('after `mouseenter` event has already been triggered', () => {
+            describe('after `focus` event has already been triggered', () => {
                 beforeEach('setup DOM elements', () => {
-                    document.getElementById('SVRNE').dispatchEvent(new Event('mouseleave'));
+                    document.getElementById('SVRNE').dispatchEvent(new Event('blur'));
                 });
 
-                it('should remove the styles from the element when hovered', () => {
+                it('should remove the styles from the element when focused', () => {
                     assert.equal(document.getElementById('SVRNE').getAttribute('style'), '');
                 });
             });
@@ -282,6 +381,34 @@ describe('Polymorph function', () => {
                 assert.equal(document.getElementById('SVRNE').getAttribute('style'), 'color: red;');
                 assert.equal(document.getElementById('A0BG9').getAttribute('style'), 'color: blue;');
             });
+        });
+    });
+
+    // describe('', () => {
+    //     beforeEach('setup DOM elements', () => {
+    //         document.body.innerHTML = (`
+    //             <div class="foo-bar" id="SVRNE">
+    //                 <div class="foo_fizz-buzz" id="HH156"></div>
+    //             </div>
+    //         `);
+    //     });
+
+    //     it('', () => {
+    //         assert();
+    //     });
+    // });
+
+    describe('when `modifier` method is called', () => {
+        beforeEach('setup DOM elements', () => {
+            document.body.innerHTML = (`
+                <div class="foo-bar" id="SVRNE">
+                    <div class="foo_fizz-buzz" id="HH156"></div>
+                </div>
+            `);
+        });
+
+        it('should determine if element has passed modifier(s)', () => {
+            assert(polymorph.modifier(document.getElementById('SVRNE'), 'bar'));
         });
     });
 });

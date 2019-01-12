@@ -29,12 +29,17 @@
     "type": "git",
     "url": "https://github.com/One-Nexus/Polymorph.git"
   },
-  "dependencies": {},
+  "sideEffects": false,
+  "dependencies": {
+    "circular-json": "^0.5.9"
+  },
   "devDependencies": {
-    "babel-core": "^6.24.1",
-    "babel-loader": "^7.1.2",
-    "babel-preset-env": "^1.7.0",
-    "babel-register": "^6.26.0",
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.2.3",
+    "@babel/preset-es2015": "^7.0.0-beta.53",
+    "@babel/register": "^7.0.0",
+    "babel-loader": "^8.0.5",
+    "babel-plugin-istanbul": "^5.1.0",
     "eslint": "^4.14.0",
     "jsdoc": "^3.5.5",
     "jsdom": "^11.0.0",
@@ -44,11 +49,16 @@
     "stylelint": "^8.4.0",
     "webpack": "^3.10.0"
   },
+  "nyc": {
+    "require": [
+      "@babel/register"
+    ]
+  },
   "scripts": {
     "lint": "eslint './src/js/**/*.js'",
-    "test": "nyc --require babel-register mocha test/tests.js --require babel-register && nyc report --reporter=lcov",
+    "test": "nyc --require @babel/register mocha test/tests.js --require @babel/register && nyc report --reporter=lcov",
     "docs": "jsdoc src -r -d docs/js",
     "js": "webpack",
-    "compile": "npm run lint && npm test && npm run docs && npm run js"
+    "build": "npm run lint && npm test && npm run docs && npm run js"
   }
 }
