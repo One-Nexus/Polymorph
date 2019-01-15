@@ -13,7 +13,8 @@ export default function() {
         output: {
             path: path.resolve(__dirname, 'dist/'),
             filename: '[name].js',
-            publicPath: '/'
+            publicPath: '/',
+            libraryTarget: 'umd'
         },
 
         plugins: [
@@ -29,7 +30,6 @@ export default function() {
         module: {
             loaders: [{
                 test: /\.(js)$/,
-                exclude: /node_modules/,
                 use: {
                     loader: 'babel-loader',
                     options: {
@@ -38,6 +38,8 @@ export default function() {
                 }
             }]
         },
+        
+        node: { Buffer: false },
 
         stats: { colors: true },
 

@@ -1,11 +1,14 @@
 import isValidCssProperty from './utilities/isValidCssProperty';
-import { getComponents, getSubComponents, hasModifier, parent } from '../../../sQuery/sQuery/src/api';
 import stringifyState from './utilities/stringifyState';
 
 /**
  * Set a module's styles on a DOM element instance
  */
 export default function polymorph(element, styles = {}, config, globals, parentElement, specificity = 0) {
+    if (typeof sQuery === 'undefined') {
+        return console.error('Polymorph requires the sQuery libray');
+    }
+
     const values = (typeof styles === 'object') ? styles : styles(element, config, globals);
     const componentGlue = (config && config.componentGlue) || (window.Synergy && Synergy.componentGlue) || '_';
     const modifierGlue  = (config && config.modifierGlue)  || (window.Synergy && Synergy.modifierGlue)  || '-';
@@ -25,7 +28,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
             /**
              * Get child components
              */
-            const components = getComponents.bind({ 
+            const components = sQuery.getComponents.bind({ 
                 DOMNodes: element, 
                 componentGlue, 
                 modifierGlue, 
@@ -35,7 +38,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
             /**
              * Get child sub-components
              */
-            const subComponents = getSubComponents.bind({ 
+            const subComponents = sQuery.getSubComponents.bind({ 
                 DOMNodes: element, 
                 componentGlue, 
                 modifierGlue, 
@@ -74,7 +77,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
              * Clean parent element/module
              */
             element.data && Object.keys(element.data.properties).forEach(property => {
-                element.style[property] = null
+                element.style[property] = null;
             });
 
             element.data.properties = {};
@@ -84,7 +87,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
              */
             components.forEach(component => {
                 component.data && Object.keys(component.data.properties).forEach(property => {
-                    component.style[property] = null
+                    component.style[property] = null;
                 });
 
                 component.data = null;
@@ -95,7 +98,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
              */
             subComponents.forEach(component => {
                 component.data && Object.keys(component.data.properties).forEach(property => {
-                    component.style[property] = null
+                    component.style[property] = null;
                 });
 
                 component.data = null;
@@ -168,8 +171,8 @@ export default function polymorph(element, styles = {}, config, globals, parentE
      * Loop through rule set
      */
     for (let [key, value] of Object.entries(values)) {
-        const matchedComponents = getComponents.bind({ DOMNodes: element, componentGlue, modifierGlue, parentElement })(key);
-        const matchedSubComponents = getSubComponents.bind({ DOMNodes: element, componentGlue, modifierGlue, parentElement })(key);
+        const matchedComponents = sQuery.getComponents.bind({ DOMNodes: element, componentGlue, modifierGlue, parentElement })(key);
+        const matchedSubComponents = sQuery.getSubComponents.bind({ DOMNodes: element, componentGlue, modifierGlue, parentElement })(key);
 
         /**
          * Handle object of CSS properties / function that will return an object
@@ -196,7 +199,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
             else if (key.indexOf('modifier(') > -1) {
                 const modifier = key.replace('modifier(', '').replace(/\)/g, '');
 
-                if (hasModifier.bind({ DOMNodes: element, componentGlue, modifierGlue })(modifier)) {
+                if (sQuery.hasModifier.bind({ DOMNodes: element, componentGlue, modifierGlue })(modifier)) {
                     specificity++;
 
                     polymorph(element, value, false, globals, parentElement, specificity);
@@ -222,7 +225,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
              */
             else if (key.indexOf('subComponent(') > -1) {
                 const subComponent = key.replace('subComponent(', '').replace(/\)/g, '');
-                const subComponents = getSubComponents.bind({ DOMNodes: element, componentGlue, modifierGlue, parentElement })(subComponent);
+                const subComponents = sQuery.getSubComponents.bind({ DOMNodes: element, componentGlue, modifierGlue, parentElement })(subComponent);
 
                 if (subComponents.length) {
                     subComponents.forEach(_component => {
@@ -256,7 +259,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
                             }
                         }, []);
 
-                        const parentSubComponent = parent.bind({ 
+                        const parentSubComponent = sQuery.parent.bind({ 
                             DOMNodes: subComponent,
                             modifierGlue: modifierGlue,
                             componentGlue: componentGlue
@@ -415,18 +418,4 @@ export default function polymorph(element, styles = {}, config, globals, parentE
     if (element === parentElement && config !== false) {
         element.dispatchEvent(new Event('stylesdidmount'));
     }
-}
-
-/**
- * Wrapper for sQuery `hasModifier()`
- */
-polymorph.modifier = (element, modifier, modifierGlue, componentGlue) => {
-    modifierGlue  = modifierGlue  || (window.Synergy && Synergy.modifierGlue)  || '-';
-    componentGlue = componentGlue || (window.Synergy && Synergy.componentGlue) || '_';
-
-    return hasModifier.bind({ 
-        DOMNodes: element,
-        modifierGlue: modifierGlue,
-        componentGlue: componentGlue
-    })(modifier);
 }
