@@ -37,6 +37,7 @@
     "@babel/polyfill": "^7.2.5",
     "@babel/preset-env": "^7.2.3",
     "@babel/register": "^7.0.0",
+    "@onenexus/squery": "^1.0.0",
     "babel-loader": "^8.0.5",
     "eslint": "^4.14.0",
     "jsdoc": "^3.5.5",
