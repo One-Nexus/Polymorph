@@ -400,17 +400,4 @@ describe('Polymorph function', () => {
     //         assert();
     //     });
     // });
-
-    describe('when `modifier` method is called', () => {
-        beforeEach('setup DOM elements', () => {
-            document.body.innerHTML = (`
-                <div class="foo-bar" id="SVRNE">
-                    <div class="foo_fizz-buzz" id="HH156"></div>
-                </div>
-            `);
-        });
-
-        it.skip('should determine if element has passed modifier(s)', () => {
-        });
-    });
 });
