@@ -206,7 +206,7 @@ export default function polymorph(element, styles = {}, config, globals, parentE
                 if (value.disableCascade) {
                     matchedSubComponents = matchedSubComponents.filter(subComponent => {
                         if (!element.getAttribute('data-component')) {
-                            console.warn(`${element} does not have data-component attribute so disableCascade option in ${value} will not reliably work`);
+                            console.warn(`${element} does not have data-component attribute so disableCascade option in ${value} may not reliably work`);
                         }
 
                         const componentName = element.getAttribute('data-component') || [...element.classList].reduce((accumulator, currentValue) => {
@@ -299,13 +299,6 @@ export default function polymorph(element, styles = {}, config, globals, parentE
             }
 
             /**
-             * Handle `before` pseudo element
-             */
-            // else if (key === ':before') {
-            //     console.log(value);
-            // }
-
-            /**
              * Handle `focus` interaction
              */
             else if (key === ':focus') {
@@ -335,6 +328,13 @@ export default function polymorph(element, styles = {}, config, globals, parentE
                     }, true);
                 }
             }
+
+            /**
+             * Handle `before` pseudo element
+             */
+            // else if (key === ':before') {
+            //     console.log(value);
+            // }
 
             /**
              * Handle case where CSS `value` to be applied to `element` is a function

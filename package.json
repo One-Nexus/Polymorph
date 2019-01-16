@@ -34,7 +34,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",
-    "@babel/polyfill": "^7.2.5",
     "@babel/preset-env": "^7.2.3",
     "@babel/register": "^7.0.0",
     "@onenexus/squery": "^1.0.0",
@@ -44,8 +43,10 @@
     "jsdom": "^11.0.0",
     "jsdom-global": "^3.0.2",
     "mocha": "^3.5.3",
-    "nyc": "^13.0.1",
-    "webpack": "^3.10.0"
+    "nyc": "^13.1.0",
+    "uglifyjs-webpack-plugin": "^2.1.1",
+    "webpack": "^4.28.4",
+    "webpack-cli": "^3.2.1"
   },
   "scripts": {
     "lint": "eslint './src/js/**/*.js'",

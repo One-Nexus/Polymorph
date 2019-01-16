@@ -7,7 +7,7 @@
 		var a = factory();
 		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
 	}
-})(typeof self !== 'undefined' ? self : this, function() {
+})(window, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -46,12 +46,32 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, {
-/******/ 				configurable: false,
-/******/ 				enumerable: true,
-/******/ 				get: getter
-/******/ 			});
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
 /******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
 /******/ 	};
 /******/
 /******/ 	// getDefaultExport function for compatibility with non-harmony modules
@@ -69,6 +89,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "/";
 /******/
+/******/
 /******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(__webpack_require__.s = 0);
 /******/ })
@@ -78,10 +99,59 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (immutable) */ __webpack_exports__["default"] = polymorph;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utilities_isValidCssProperty__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utilities_stringifyState__ = __webpack_require__(2);
+__webpack_require__.r(__webpack_exports__);
+
+// CONCATENATED MODULE: ./src/utilities/isValidCssProperty.js
+/**
+ * Determine if a string is a valid CSS property
+ * 
+ * @param {String} query
+ */
+function isValidCssProperty(query) {
+  var el = document.createElement('div');
+  el.style[query] = 'initial';
+  return !!el.style.cssText;
+}
+// CONCATENATED MODULE: ./src/utilities/stringifyState.js
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+/**
+ * Stringify a polymorph state
+ * 
+ * @see https://stackoverflow.com/a/48254637/2253888
+ * 
+ * @param {Object} state 
+ */
+/* harmony default export */ var stringifyState = (function (state) {
+  var cache = new Set();
+  return JSON.stringify(state, function (key, value) {
+    // Do not attempt to serialize DOM elements as the bloat causes browser to crash
+    if (value instanceof HTMLElement) {
+      value = '[HTMLElement]';
+    }
+
+    if (_typeof(value) === 'object' && value !== null) {
+      if (cache.has(value)) {
+        // Circular reference found
+        try {
+          // If this value does not reference a parent it can be deduped
+          return JSON.parse(JSON.stringify(value));
+        } catch (err) {
+          // discard key if value cannot be deduped
+          return;
+        }
+      } // Store value in our set
+
+
+      cache.add(value);
+    }
+
+    return value;
+  });
+});
+;
+// CONCATENATED MODULE: ./src/polymorph.js
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return polymorph; });
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
@@ -98,7 +168,7 @@ function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = 
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function polymorph_typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { polymorph_typeof = function _typeof(obj) { return typeof obj; }; } else { polymorph_typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return polymorph_typeof(obj); }
 
 
 
@@ -117,7 +187,7 @@ function polymorph(element) {
     return console.error('Polymorph requires the sQuery libray');
   }
 
-  var values = _typeof(styles) === 'object' ? styles : styles(element, config, globals);
+  var values = polymorph_typeof(styles) === 'object' ? styles : styles(element, config, globals);
   var componentGlue = config && config.componentGlue || window.Synergy && Synergy.componentGlue || '_';
   var modifierGlue = config && config.modifierGlue || window.Synergy && Synergy.modifierGlue || '-';
   /**
@@ -274,7 +344,7 @@ function polymorph(element) {
      * of CSS properties
      */
 
-    if (typeof value === 'function' || _typeof(value) === 'object') {
+    if (typeof value === 'function' || polymorph_typeof(value) === 'object') {
       /**
        * Handle case where desired element for styles to be applied needs to be
        * manually controlled
@@ -310,7 +380,7 @@ function polymorph(element) {
          */
         else if (matchedComponents.length) {
             matchedComponents.forEach(function (_component) {
-              if (_typeof(value) === 'object') {
+              if (polymorph_typeof(value) === 'object') {
                 polymorph(_component, value, false, globals, parentElement);
               } else if (typeof value === 'function') {
                 polymorph(_component, value(_component), false, globals, parentElement);
@@ -331,7 +401,7 @@ function polymorph(element) {
 
               if (subComponents.length) {
                 subComponents.forEach(function (_component) {
-                  if (_typeof(value) === 'object') {
+                  if (polymorph_typeof(value) === 'object') {
                     polymorph(_component, value, false, globals, parentElement);
                   } else if (typeof value === 'function') {
                     polymorph(_component, value(_component), false, globals, parentElement);
@@ -350,7 +420,7 @@ function polymorph(element) {
                 if (value.disableCascade) {
                   matchedSubComponents = matchedSubComponents.filter(function (subComponent) {
                     if (!element.getAttribute('data-component')) {
-                      console.warn("".concat(element, " does not have data-component attribute so disableCascade option in ").concat(value, " will not reliably work"));
+                      console.warn("".concat(element, " does not have data-component attribute so disableCascade option in ").concat(value, " may not reliably work"));
                     }
 
                     var componentName = element.getAttribute('data-component') || _toConsumableArray(element.classList).reduce(function (accumulator, currentValue) {
@@ -370,7 +440,7 @@ function polymorph(element) {
                 }
 
                 matchedSubComponents.forEach(function (_component) {
-                  if (_typeof(value) === 'object') {
+                  if (polymorph_typeof(value) === 'object') {
                     polymorph(_component, value, false, globals, parentElement);
                   } else if (typeof value === 'function') {
                     polymorph(_component, value(_component), false, globals, parentElement);
@@ -385,8 +455,8 @@ function polymorph(element) {
                   // should ideally run just once per group/wrapper
                   element.parentNode.classList.forEach(function (className) {
                     if (className.indexOf('group') === 0 || className.indexOf('wrapper') === 0) {
-                      var wrapperValues = _typeof(value) === 'object' ? value : value(element.parentNode);
-                      var childValues = _typeof(value) === 'object' ? value : value(element); // apply styles to wrapper/group element
+                      var wrapperValues = polymorph_typeof(value) === 'object' ? value : value(element.parentNode);
+                      var childValues = polymorph_typeof(value) === 'object' ? value : value(element); // apply styles to wrapper/group element
 
                       polymorph(element.parentNode, wrapperValues, false, globals, parentElement); // apply styles to child modules
 
@@ -401,7 +471,7 @@ function polymorph(element) {
                  * Handle `hover` interaction
                  */
                 else if (key === ':hover') {
-                    var stringifiedState = Object(__WEBPACK_IMPORTED_MODULE_1__utilities_stringifyState__["a" /* default */])(values);
+                    var stringifiedState = stringifyState(values);
                     var isHoverState = parentElement.data.states.some(function (state) {
                       return state.type === 'mouseover' && state.element === element && state.value === stringifiedState;
                     });
@@ -430,13 +500,6 @@ function polymorph(element) {
                     }
                   }
                   /**
-                   * Handle `before` pseudo element
-                   */
-                  // else if (key === ':before') {
-                  //     console.log(value);
-                  // }
-
-                  /**
                    * Handle `focus` interaction
                    */
                   else if (key === ':focus') {
@@ -464,11 +527,18 @@ function polymorph(element) {
                       }
                     }
                     /**
+                     * Handle `before` pseudo element
+                     */
+                    // else if (key === ':before') {
+                    //     console.log(value);
+                    // }
+
+                    /**
                      * Handle case where CSS `value` to be applied to `element` is a function
                      */
                     else if (typeof value === 'function') {
                         if (!element.data.properties[key] || element.data.properties[key].specificity < specificity) {
-                          if (Object(__WEBPACK_IMPORTED_MODULE_0__utilities_isValidCssProperty__["a" /* default */])(key)) {
+                          if (isValidCssProperty(key)) {
                             element.style[key] = value(element.style[key]);
                             element.data.properties[key] = {
                               value: value(element.style[key]),
@@ -499,7 +569,7 @@ function polymorph(element) {
   for (var _i = 0; _i < _arr.length; _i++) {
     var _ret = _loop();
 
-    if (_typeof(_ret) === "object") return _ret.v;
+    if (polymorph_typeof(_ret) === "object") return _ret.v;
   }
   /**
    * Dispatch initial event when styles first mount
@@ -510,66 +580,6 @@ function polymorph(element) {
     element.dispatchEvent(new Event('stylesdidmount'));
   }
 }
-
-/***/ }),
-/* 1 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = isValidCssProperty;
-/**
- * Determine if a string is a valid CSS property
- * 
- * @param {String} query
- */
-function isValidCssProperty(query) {
-  var el = document.createElement('div');
-  el.style[query] = 'initial';
-  return !!el.style.cssText;
-}
-
-/***/ }),
-/* 2 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-/**
- * Stringify a polymorph state
- * 
- * @see https://stackoverflow.com/a/48254637/2253888
- * 
- * @param {Object} state 
- */
-/* harmony default export */ __webpack_exports__["a"] = (function (state) {
-  var cache = new Set();
-  return JSON.stringify(state, function (key, value) {
-    // Do not attempt to serialize DOM elements as the bloat causes browser to crash
-    if (value instanceof HTMLElement) {
-      value = '[HTMLElement]';
-    }
-
-    if (_typeof(value) === 'object' && value !== null) {
-      if (cache.has(value)) {
-        // Circular reference found
-        try {
-          // If this value does not reference a parent it can be deduped
-          return JSON.parse(JSON.stringify(value));
-        } catch (err) {
-          // discard key if value cannot be deduped
-          return;
-        }
-      } // Store value in our set
-
-
-      cache.add(value);
-    }
-
-    return value;
-  });
-});
-;
 
 /***/ })
 /******/ ]);
