@@ -6,10 +6,19 @@ import stringifyState from './utilities/stringifyState';
  */
 export default function polymorph(element, styles = {}, config, globals, parentElement, specificity = 0) {
     if (typeof sQuery === 'undefined') {
-        import('../../../sQuery/sQuery/src/squery').then(({ getComponents, subComponents, hasModifier, parent }) => {
-            sQuery = {
-                getComponents, subComponents, hasModifier, parent
-            }
+        const sQuery = {};
+
+        import('../../../sQuery/sQuery/src/api/getComponents').then((getComponents) => {
+            sQuery.getComponents = getComponents;
+        });
+        import('../../../sQuery/sQuery/src/api/subComponent').then((subComponents) => {
+            sQuery.subComponents = subComponents;
+        });
+        import('../../../sQuery/sQuery/src/api/hasModifier').then((hasModifier) => {
+            sQuery.hasModifier = hasModifier;
+        });
+        import('../../../sQuery/sQuery/src/api/parent').then((parent) => {
+            sQuery.parent = parent;
         });
     }
 
