@@ -6,7 +6,11 @@ import stringifyState from './utilities/stringifyState';
  */
 export default function polymorph(element, styles = {}, config, globals, parentElement, specificity = 0) {
     if (typeof sQuery === 'undefined') {
-        return console.error('Polymorph requires the sQuery libray');
+        import('../../../sQuery/sQuery/src/squery').then(({ getComponents, subComponents, hasModifier, parent }) => {
+            sQuery = {
+                getComponents, subComponents, hasModifier, parent
+            }
+        });
     }
 
     const values = (typeof styles === 'object') ? styles : styles(element, config, globals);

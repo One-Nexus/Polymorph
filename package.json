@@ -34,10 +34,12 @@
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",
+    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
     "@babel/preset-env": "^7.2.3",
     "@babel/register": "^7.0.0",
     "@onenexus/squery": "^1.0.0",
     "babel-loader": "^8.0.5",
+    "babel-plugin-dynamic-import-node": "^2.2.0",
     "eslint": "^4.14.0",
     "jsdoc": "^3.5.5",
     "jsdom": "^11.0.0",
