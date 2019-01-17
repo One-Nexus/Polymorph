@@ -91,7 +91,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 5);
+/******/ 	return __webpack_require__(__webpack_require__.s = 6);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -340,6 +340,71 @@ function getComponents() {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return getSubComponents; });
+/* harmony import */ var _utilities_getModuleNamespace__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(0);
+/* harmony import */ var _utilities_isValidSelector__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(1);
+
+
+/**
+ * @param {*} subComponentName 
+ */
+
+function getSubComponents(subComponentName) {
+  var _this = this;
+
+  var context = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+  var modifier = arguments.length > 2 ? arguments[2] : undefined;
+  if (subComponentName && !Object(_utilities_isValidSelector__WEBPACK_IMPORTED_MODULE_1__[/* default */ "a"])(subComponentName)) return [];
+
+  if (this.DOMNodes instanceof NodeList) {
+    return Array.prototype.slice.call(this.DOMNodes).reduce(function (matches, DOMNodes) {
+      return matches.concat(Array.prototype.slice.call(getSubComponents.bind(Object.assign(_this, {
+        DOMNodes: DOMNodes
+      }))(subComponentName, context, modifier)));
+    }, []);
+  }
+
+  var namespace = this.namespace || Object(_utilities_getModuleNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(this.DOMNodes, this.componentGlue, this.modifierGlue) || '';
+  var depth = namespace.split(this.componentGlue).length - 1;
+
+  if (context.length) {
+    namespace = [namespace].concat(context, [subComponentName]).join(this.componentGlue);
+  } else if (subComponentName) {
+    namespace = namespace + this.componentGlue + subComponentName;
+  }
+
+  var selector = ".".concat(namespace, ", [class*=\"").concat(namespace + this.modifierGlue, "\"]");
+
+  if (!subComponentName) {
+    selector = "[class*=\"".concat(namespace + this.componentGlue, "\"]");
+  }
+
+  return Array.prototype.slice.call(this.DOMNodes.querySelectorAll(selector)).filter(function (subComponent) {
+    return Array.prototype.slice.call(subComponent.classList).some(function (className) {
+      if ((className.match(new RegExp(_this.componentGlue, 'g')) || []).length < 2) {
+        return false;
+      }
+
+      var namespaceMatch;
+
+      if (modifier) {
+        namespaceMatch = className.indexOf(namespace) === 0 && className.indexOf(modifier) > -1;
+      } else {
+        namespaceMatch = className.indexOf(namespace) === 0;
+      }
+
+      var depthMatch = className.split(_this.componentGlue).length - 1 === (context.length ? depth : depth + 1);
+      return depth ? namespaceMatch && depthMatch : namespaceMatch;
+    });
+  });
+}
+
+/***/ }),
+/* 5 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return hasModifier; });
 /* harmony import */ var _utilities_getModuleNamespace__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(0);
 
@@ -378,7 +443,7 @@ function hasModifier(modifier) {
 }
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -453,13 +518,22 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 function polymorph_typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { polymorph_typeof = function _typeof(obj) { return typeof obj; }; } else { polymorph_typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return polymorph_typeof(obj); }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
 
+var sQuery = typeof window !== 'undefined' && window.sQuery;
 
+if (!sQuery || typeof process !== 'undefined' && !process.env.SYNERGY) {
+  sQuery = {
+    getComponents: __webpack_require__(3).default,
+    getSubComponents: __webpack_require__(4).default,
+    hasModifier: __webpack_require__(5).default,
+    parent: __webpack_require__(2).default
+  };
+}
 /**
  * Set a module's styles on a DOM element instance
  */
+
 
 function polymorph(element) {
   var styles = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -467,31 +541,6 @@ function polymorph(element) {
   var globals = arguments.length > 3 ? arguments[3] : undefined;
   var parentElement = arguments.length > 4 ? arguments[4] : undefined;
   var specificity = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
-
-  if (typeof sQuery === 'undefined') {
-    var _sQuery = {};
-    Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(3));
-    }).then(function (getComponents) {
-      _sQuery.getComponents = getComponents;
-    });
-    Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(6));
-    }).then(function (subComponents) {
-      _sQuery.subComponents = subComponents;
-    });
-    Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(4));
-    }).then(function (hasModifier) {
-      _sQuery.hasModifier = hasModifier;
-    });
-    Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(2));
-    }).then(function (parent) {
-      _sQuery.parent = parent;
-    });
-  }
-
   var values = polymorph_typeof(styles) === 'object' ? styles : styles(element, config, globals);
   var componentGlue = config && config.componentGlue || window.Synergy && Synergy.componentGlue || '_';
   var modifierGlue = config && config.modifierGlue || window.Synergy && Synergy.modifierGlue || '-';
@@ -885,123 +934,26 @@ function polymorph(element) {
     element.dispatchEvent(new Event('stylesdidmount'));
   }
 }
-
-/***/ }),
-/* 6 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-
-// EXTERNAL MODULE: /Users/reede/Documents/Projects/sQuery/sQuery/src/utilities/getModuleNamespace.js
-var getModuleNamespace = __webpack_require__(0);
-
-// EXTERNAL MODULE: /Users/reede/Documents/Projects/sQuery/sQuery/src/utilities/isValidSelector.js
-var isValidSelector = __webpack_require__(1);
-
-// CONCATENATED MODULE: /Users/reede/Documents/Projects/sQuery/sQuery/src/api/getSubComponents.js
-
-
 /**
- * @param {*} subComponentName 
+ * Wrapper for sQuery `hasModifier()`
  */
 
-function getSubComponts(subComponentName) {
-  var _this = this;
-
-  var context = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-  var modifier = arguments.length > 2 ? arguments[2] : undefined;
-  if (subComponentName && !Object(isValidSelector["a" /* default */])(subComponentName)) return [];
-
-  if (this.DOMNodes instanceof NodeList) {
-    return Array.prototype.slice.call(this.DOMNodes).reduce(function (matches, DOMNodes) {
-      return matches.concat(Array.prototype.slice.call(getSubComponts.bind(Object.assign(_this, {
-        DOMNodes: DOMNodes
-      }))(subComponentName, context, modifier)));
-    }, []);
-  }
-
-  var namespace = this.namespace || Object(getModuleNamespace["a" /* default */])(this.DOMNodes, this.componentGlue, this.modifierGlue) || '';
-  var depth = namespace.split(this.componentGlue).length - 1;
-
-  if (context.length) {
-    namespace = [namespace].concat(context, [subComponentName]).join(this.componentGlue);
-  } else if (subComponentName) {
-    namespace = namespace + this.componentGlue + subComponentName;
-  }
-
-  var selector = ".".concat(namespace, ", [class*=\"").concat(namespace + this.modifierGlue, "\"]");
-
-  if (!subComponentName) {
-    selector = "[class*=\"".concat(namespace + this.componentGlue, "\"]");
-  }
-
-  return Array.prototype.slice.call(this.DOMNodes.querySelectorAll(selector)).filter(function (subComponent) {
-    return Array.prototype.slice.call(subComponent.classList).some(function (className) {
-      if ((className.match(new RegExp(_this.componentGlue, 'g')) || []).length < 2) {
-        return false;
-      }
-
-      var namespaceMatch;
-
-      if (modifier) {
-        namespaceMatch = className.indexOf(namespace) === 0 && className.indexOf(modifier) > -1;
-      } else {
-        namespaceMatch = className.indexOf(namespace) === 0;
-      }
-
-      var depthMatch = className.split(_this.componentGlue).length - 1 === (context.length ? depth : depth + 1);
-      return depth ? namespaceMatch && depthMatch : namespaceMatch;
-    });
-  });
-}
-// CONCATENATED MODULE: /Users/reede/Documents/Projects/sQuery/sQuery/src/api/subComponent.js
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return subComponent; });
-
-
+polymorph.modifier = function (element, modifier, modifierGlue, componentGlue) {
+  modifierGlue = modifierGlue || window.Synergy && Synergy.modifierGlue || '-';
+  componentGlue = componentGlue || window.Synergy && Synergy.componentGlue || '_';
+  return sQuery.hasModifier.bind({
+    DOMNodes: element,
+    modifierGlue: modifierGlue,
+    componentGlue: componentGlue
+  })(modifier);
+};
 /**
- * @param {String} componentName 
- * @param {(('find'|'is')|Function)} operator 
+ * Attach to Window
  */
 
-function subComponent(subComponentName, operator) {
-  var _this = this;
 
-  if (!subComponentName && !operator) {
-    return getSubComponts.bind(this)();
-  }
-
-  if (!operator || operator === 'find') {
-    return getSubComponts.bind(this)(subComponentName);
-  }
-
-  if (operator === 'is') {
-    if (this.DOMNodes instanceof NodeList) {
-      return Array.prototype.slice.call(this.DOMNodes).every(function (node) {
-        return is.bind(_this)(node, subComponentName);
-      });
-    }
-
-    return is.bind(this)(this.DOMNodes, subComponentName);
-  }
-
-  if (typeof operator === 'function') {
-    getSubComponts.bind(this)(subComponentName).forEach(function (node) {
-      return operator(node);
-    });
-  }
-}
-/**
- * @param {HTMLElement} node 
- * @param {String} subComponentName 
- */
-
-function is(node, subComponentName) {
-  var query = this.namespace || Object(getModuleNamespace["a" /* default */])(node, this.componentGlue, this.modifierGlue);
-  var isMatch = query.indexOf(subComponentName) === query.length - subComponentName.length;
-  return Array.prototype.slice.call(node.classList).some(function (className) {
-    return className.indexOf(query) > -1 && isMatch;
-  });
+if (typeof window !== 'undefined') {
+  window.polymorph = polymorph;
 }
 
 /***/ })

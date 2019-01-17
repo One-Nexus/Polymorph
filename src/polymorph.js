@@ -1,27 +1,21 @@
 import isValidCssProperty from './utilities/isValidCssProperty';
 import stringifyState from './utilities/stringifyState';
 
+let sQuery = typeof window !== 'undefined' && window.sQuery;
+
+if (!sQuery || (typeof process !== 'undefined' && !process.env.SYNERGY)) {
+    sQuery = {
+        getComponents: require('../../../sQuery/sQuery/src/api/getComponents').default,
+        getSubComponents: require('../../../sQuery/sQuery/src/api/getSubComponents').default,
+        hasModifier: require('../../../sQuery/sQuery/src/api/hasModifier').default,
+        parent: require('../../../sQuery/sQuery/src/api/parent').default
+    }
+}
+
 /**
  * Set a module's styles on a DOM element instance
  */
 export default function polymorph(element, styles = {}, config, globals, parentElement, specificity = 0) {
-    if (typeof sQuery === 'undefined') {
-        const sQuery = {};
-
-        import('../../../sQuery/sQuery/src/api/getComponents').then((getComponents) => {
-            sQuery.getComponents = getComponents;
-        });
-        import('../../../sQuery/sQuery/src/api/subComponent').then((subComponents) => {
-            sQuery.subComponents = subComponents;
-        });
-        import('../../../sQuery/sQuery/src/api/hasModifier').then((hasModifier) => {
-            sQuery.hasModifier = hasModifier;
-        });
-        import('../../../sQuery/sQuery/src/api/parent').then((parent) => {
-            sQuery.parent = parent;
-        });
-    }
-
     const values = (typeof styles === 'object') ? styles : styles(element, config, globals);
     const componentGlue = (config && config.componentGlue) || (window.Synergy && Synergy.componentGlue) || '_';
     const modifierGlue  = (config && config.modifierGlue)  || (window.Synergy && Synergy.modifierGlue)  || '-';
@@ -389,4 +383,25 @@ export default function polymorph(element, styles = {}, config, globals, parentE
     if (element === parentElement && config !== false) {
         element.dispatchEvent(new Event('stylesdidmount'));
     }
+}
+
+/**
+ * Wrapper for sQuery `hasModifier()`
+ */
+polymorph.modifier = (element, modifier, modifierGlue, componentGlue) => {
+    modifierGlue  = modifierGlue  || (window.Synergy && Synergy.modifierGlue)  || '-';
+    componentGlue = componentGlue || (window.Synergy && Synergy.componentGlue) || '_';
+
+    return sQuery.hasModifier.bind({ 
+        DOMNodes: element,
+        modifierGlue: modifierGlue,
+        componentGlue: componentGlue
+    })(modifier);
+}
+
+/**
+ * Attach to Window
+ */
+if (typeof window !== 'undefined') {
+    window.polymorph = polymorph;
 }

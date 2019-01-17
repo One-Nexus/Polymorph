@@ -29,20 +29,18 @@
     "type": "git",
     "url": "https://github.com/One-Nexus/Polymorph.git"
   },
-  "peerDependencies": {
+  "dependencies": {
     "@onenexus/squery": "^1.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",
-    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
     "@babel/preset-env": "^7.2.3",
+    "@babel/polyfill": "^7.2.5",
     "@babel/register": "^7.0.0",
-    "@onenexus/squery": "^1.0.0",
     "babel-loader": "^8.0.5",
-    "babel-plugin-dynamic-import-node": "^2.2.0",
     "eslint": "^4.14.0",
     "jsdoc": "^3.5.5",
-    "jsdom": "^11.0.0",
+    "jsdom": "^13.1.0",
     "jsdom-global": "^3.0.2",
     "mocha": "^3.5.3",
     "nyc": "^13.1.0",
@@ -52,7 +50,7 @@
   },
   "scripts": {
     "lint": "eslint './src/js/**/*.js'",
-    "test": "nyc mocha test/tests.js --require @babel/register && nyc report --reporter=lcov",
+    "test": "nyc mocha test/tests.js --require ./test/helper.js && nyc report --reporter=lcov",
     "docs": "jsdoc src -r -d docs/js",
     "js": "webpack",
     "build": "npm run lint && npm test && npm run docs && npm run js"
