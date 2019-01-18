@@ -436,7 +436,7 @@ function hasModifier(modifier) {
       var matchIndex = className.indexOf(_this.modifierGlue + modifier);
       var namespaceMatch = className.indexOf(namespace) === 0;
       var isModifierTest1 = className.indexOf(_this.modifierGlue + modifier + _this.modifierGlue) > -1;
-      var isModifierTest2 = matchIndex > -1 && matchIndex === className.length - modifier.length - 1;
+      var isModifierTest2 = matchIndex > -1 && matchIndex === className.length - modifier.length - _this.modifierGlue.length;
       return namespaceMatch && (isModifierTest1 || isModifierTest2);
     });
   }
@@ -520,7 +520,7 @@ function polymorph_typeof(obj) { if (typeof Symbol === "function" && typeof Symb
 
 
 
-var sQuery = typeof window !== 'undefined' && window.sQuery;
+var sQuery = typeof window !== 'undefined' && window.sQuery; // `process` and `require` exploited to help reduce bundle size
 
 if (!sQuery || typeof process !== 'undefined' && !process.env.SYNERGY) {
   sQuery = {
@@ -537,13 +537,14 @@ if (!sQuery || typeof process !== 'undefined' && !process.env.SYNERGY) {
 
 function polymorph(element) {
   var styles = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  var config = arguments.length > 2 ? arguments[2] : undefined;
+  var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
   var globals = arguments.length > 3 ? arguments[3] : undefined;
   var parentElement = arguments.length > 4 ? arguments[4] : undefined;
   var specificity = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
+  var Synergy = window.Synergy || {};
+  var modifierGlue = config.modifierGlue || Synergy.modifierGlue || '-';
+  var componentGlue = config.componentGlue || Synergy.componentGlue || '_';
   var values = polymorph_typeof(styles) === 'object' ? styles : styles(element, config, globals);
-  var componentGlue = config && config.componentGlue || window.Synergy && Synergy.componentGlue || '_';
-  var modifierGlue = config && config.modifierGlue || window.Synergy && Synergy.modifierGlue || '-';
   /**
    * Setup `repaint` method on parent element
    */
@@ -939,8 +940,9 @@ function polymorph(element) {
  */
 
 polymorph.modifier = function (element, modifier, modifierGlue, componentGlue) {
-  modifierGlue = modifierGlue || window.Synergy && Synergy.modifierGlue || '-';
-  componentGlue = componentGlue || window.Synergy && Synergy.componentGlue || '_';
+  var Synergy = window.Synergy || {};
+  modifierGlue = modifierGlue || Synergy.modifierGlue || '-';
+  componentGlue = componentGlue || Synergy.componentGlue || '_';
   return sQuery.hasModifier.bind({
     DOMNodes: element,
     modifierGlue: modifierGlue,

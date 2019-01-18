@@ -1,8 +1,9 @@
 import isValidCssProperty from './utilities/isValidCssProperty';
 import stringifyState from './utilities/stringifyState';
 
-let sQuery = typeof window !== 'undefined' && window.sQuery;
+var sQuery = (typeof window !== 'undefined') && window.sQuery;
 
+// `process` and `require` exploited to help reduce bundle size
 if (!sQuery || (typeof process !== 'undefined' && !process.env.SYNERGY)) {
     sQuery = {
         getComponents: require('../../../sQuery/sQuery/src/api/getComponents').default,
@@ -15,10 +16,13 @@ if (!sQuery || (typeof process !== 'undefined' && !process.env.SYNERGY)) {
 /**
  * Set a module's styles on a DOM element instance
  */
-export default function polymorph(element, styles = {}, config, globals, parentElement, specificity = 0) {
+export default function polymorph(element, styles = {}, config = {}, globals, parentElement, specificity = 0) {
+    var Synergy = window.Synergy || {};
+
+    const modifierGlue  = config.modifierGlue  || Synergy.modifierGlue  || '-';
+    const componentGlue = config.componentGlue || Synergy.componentGlue || '_';
+
     const values = (typeof styles === 'object') ? styles : styles(element, config, globals);
-    const componentGlue = (config && config.componentGlue) || (window.Synergy && Synergy.componentGlue) || '_';
-    const modifierGlue  = (config && config.modifierGlue)  || (window.Synergy && Synergy.modifierGlue)  || '-';
 
     /**
      * Setup `repaint` method on parent element
@@ -389,13 +393,15 @@ export default function polymorph(element, styles = {}, config, globals, parentE
  * Wrapper for sQuery `hasModifier()`
  */
 polymorph.modifier = (element, modifier, modifierGlue, componentGlue) => {
-    modifierGlue  = modifierGlue  || (window.Synergy && Synergy.modifierGlue)  || '-';
-    componentGlue = componentGlue || (window.Synergy && Synergy.componentGlue) || '_';
+    var Synergy = window.Synergy || {};
+
+    modifierGlue  = modifierGlue  || Synergy.modifierGlue  || '-';
+    componentGlue = componentGlue || Synergy.componentGlue || '_';
 
     return sQuery.hasModifier.bind({ 
         DOMNodes: element,
-        modifierGlue: modifierGlue,
-        componentGlue: componentGlue
+        modifierGlue,
+        componentGlue
     })(modifier);
 }
 
