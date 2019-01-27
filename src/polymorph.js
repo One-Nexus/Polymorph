@@ -3,7 +3,7 @@ import stringifyState from './utilities/stringifyState';
 
 var sQuery = (typeof window !== 'undefined') && window.sQuery;
 
-// `process` and `require` exploited to help reduce bundle size
+// `process` and `require` are exploited to help reduce bundle size
 if (!sQuery || (typeof process !== 'undefined' && !process.env.SYNERGY)) {
     sQuery = {
         getComponents: require('../../../sQuery/sQuery/src/api/getComponents').default,

@@ -520,7 +520,7 @@ function polymorph_typeof(obj) { if (typeof Symbol === "function" && typeof Symb
 
 
 
-var sQuery = typeof window !== 'undefined' && window.sQuery; // `process` and `require` exploited to help reduce bundle size
+var sQuery = typeof window !== 'undefined' && window.sQuery; // `process` and `require` are exploited to help reduce bundle size
 
 if (!sQuery || typeof process !== 'undefined' && !process.env.SYNERGY) {
   sQuery = {
