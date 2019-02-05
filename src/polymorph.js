@@ -13,10 +13,134 @@ if (!sQuery || (typeof process !== 'undefined' && !process.env.SYNERGY)) {
     }
 }
 
+export default function polymorph(element, styles, config = {}, globals, context) {
+    var Synergy = window.Synergy || {};
+
+    const modifierGlue  = config.modifierGlue  || Synergy.modifierGlue  || '-';
+    const componentGlue = config.componentGlue || Synergy.componentGlue || '_';
+
+    /**
+     * Handle case where desired element for styles to be applied needs to be
+     * manually controlled
+     */
+    if (styles instanceof Array) {
+        if (styles[0] instanceof HTMLElement) {
+            return polymorph(styles[0], styles[1], config, globals, context);
+        }
+
+        if (styles[0] instanceof NodeList) {
+            return styles[0].forEach(node => polymorph(node, styles[1], config, globals, context));
+        }
+    }
+
+    let STYLESHEETS = styles;
+
+    if (typeof styles === 'function') {
+        STYLESHEETS = styles(element, config, globals);
+    }
+
+    element.repaint = element.repaint || [];
+
+    /**
+     * Handle array of stylesheets
+     */
+    if (STYLESHEETS.constructor === Array) {
+        if (STYLESHEETS.every(value => value.constructor == Object)) {
+            return STYLESHEETS.forEach(value => polymorph(element, value, config, globals, context));
+        }
+    }
+
+    const STATE = stringifyState(STYLESHEETS);
+
+    if (!context && !element.repaint.some(state => stringifyState(state) === STATE)) {
+        if (!context) {
+            element.repaint.push(STYLESHEETS);
+        }
+    }
+
+    Object.entries(STYLESHEETS).forEach(entry => {
+        const [key, value] = [entry[0], entry[1]];
+
+        let COMPONENTS = sQuery.getComponents.bind({ 
+            DOMNodes: element, componentGlue, modifierGlue 
+        })(key);
+
+        let SUB_COMPONENTS = sQuery.getSubComponents.bind({ 
+            DOMNodes: element, componentGlue, modifierGlue
+        })(key);
+
+        /**
+         * Smart handle `components`
+         */
+        if (COMPONENTS.length) {
+            return COMPONENTS.forEach(COMPONENT => polymorph(COMPONENT, value, config, globals, context));
+        }
+
+        /**
+         * Smart handle `sub-components`
+         */
+        if (SUB_COMPONENTS.length) {
+            if (value.disableCascade) {
+                SUB_COMPONENTS = SUB_COMPONENTS.filter(subComponent => {
+                    const componentName = element.getAttribute('data-component') || [...element.classList].reduce((accumulator, currentValue) => {
+                        if (currentValue.indexOf(componentGlue) > 1) {
+                            currentValue = currentValue.substring(currentValue.lastIndexOf(componentGlue) + 1, currentValue.length);
+
+                            return currentValue.substring(0, currentValue.indexOf(modifierGlue));
+                        }
+                    }, []);
+
+                    const parentSubComponent = sQuery.parent.bind({ 
+                        DOMNodes: subComponent,
+                        modifierGlue: modifierGlue,
+                        componentGlue: componentGlue
+                    })(componentName);
+
+                    return element === parentSubComponent;
+                });
+            }
+
+            return SUB_COMPONENTS.forEach(SUB_COMPONENT => polymorph(SUB_COMPONENT, value, config, globals, context));
+        }
+
+        /**
+         * Handle `hover` interaction
+         */
+        if (!context && key === ':hover') {
+            element.addEventListener('mouseover', function mouseover() {
+                console.log(element, value);
+                polymorph(element, value, config, globals, 'mouseover');
+            }, false);
+
+            element.addEventListener('mouseout', function mouseout() {
+                console.log(element.repaint);
+                element.repaint.forEach(STYLESHEET => {
+                    polymorph(element, STYLESHEET, config, globals, 'mouseout');
+                })
+            }, false);
+        }
+    
+        /**
+         * Handle `modifiers`
+         */
+        if (key.indexOf('modifier(') > -1) {
+            const modifier = key.replace('modifier(', '').replace(/\)/g, '');
+
+            if (sQuery.hasModifier.bind({ DOMNodes: element, componentGlue, modifierGlue })(modifier)) {
+                polymorph(element, value, config, globals, context);
+            }
+
+            return;
+        }
+
+        element.style[key] = value;
+    });
+}
+
 /**
  * Set a module's styles on a DOM element instance
  */
-export default function polymorph(element, styles = {}, config = {}, globals, parentElement, specificity = 0) {
+function _polymorph(element, styles = {}, config = {}, globals, parentElement, specificity = 0) {
     var Synergy = window.Synergy || {};
 
     const modifierGlue  = config.modifierGlue  || Synergy.modifierGlue  || '-';
