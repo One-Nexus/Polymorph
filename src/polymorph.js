@@ -23,17 +23,7 @@ export default function polymorph(element, styles, config = {}, globals, context
      * Setup data interface
      */
     element.polymorph = element.polymorph || {
-        rules: [], data: {}
-    }
-
-    /**
-     * Setup repaint() method
-     */
-    element.repaint = element.repaint || function(context = 'repaint') {
-        // console.log(element.polymorph.data.background)
-        element.polymorph.rules.forEach(STYLESHEET => {
-            polymorph(element, STYLESHEET, config, globals, context);
-        });
+        rules: [], data: {}, context: [], listeners: []
     }
 
     /**
@@ -49,28 +39,60 @@ export default function polymorph(element, styles, config = {}, globals, context
         }
     }
 
-    let STYLESHEETS = styles;
-
-    if (typeof styles === 'function') {
-        STYLESHEETS = styles(element, config, globals);
-    }
+    let STYLESHEETS = (typeof styles === 'function') ? styles(element, config, globals) : styles;
 
     /**
      * Handle array of stylesheets
      */
     if (STYLESHEETS.constructor === Array) {
-        if (STYLESHEETS.every(value => value && value.constructor == Object)) {
+        if (STYLESHEETS.every(value => value && value.constructor === Object)) {
             return STYLESHEETS.forEach(value => polymorph(element, value, config, globals, context));
         }
     }
 
-    const STATE = stringifyState(STYLESHEETS);
+    if (!element.polymorph.rules.some(state => stringifyState(state.rule) === stringifyState(STYLESHEETS))) {
+        element.polymorph.rules.push({
+            rule: STYLESHEETS,
+            context: context
+        });
+    }
 
-    if (!context && !element.polymorph.rules.some(state => stringifyState(state) === STATE)) {
-        if (STYLESHEETS.background === 'red') {
-            console.log('foo')
+    if (context && !element.polymorph.context.includes(context)) {
+        element.polymorph.context.push(context);
+    }
+
+    /**
+     * Setup repaint() method
+     */
+    element.repaint = element.repaint || function(context = 'reset') {
+        if (context && context.constructor === Array && context.length) {
+            return context.forEach(item => element.repaint(item));
         }
-        element.polymorph.rules.push(STYLESHEETS);
+
+        let COMPONENTS = sQuery.getComponents.bind({ 
+            DOMNodes: element, componentGlue, modifierGlue 
+        })();
+
+        let SUB_COMPONENTS = sQuery.getSubComponents.bind({ 
+            DOMNodes: element, componentGlue, modifierGlue
+        })();
+
+        if (context === 'reset') {
+            element.polymorph.context = [];
+
+            [...COMPONENTS, ...SUB_COMPONENTS].forEach(COMPONENT => COMPONENT.polymorph.context = []);
+        }
+
+        if (context && !element.polymorph.context.includes(context)) {
+            element.polymorph.context = element.polymorph.context.concat(context);
+        }
+
+        element.polymorph.rules.forEach(STYLESHEET => {
+            console.log(STYLESHEET, context);
+            if (!STYLESHEET.context || STYLESHEET.context === context) {
+                polymorph(element, STYLESHEET.rule, config, globals, context);
+            }
+        });
     }
 
     /**
@@ -92,6 +114,19 @@ export default function polymorph(element, styles, config = {}, globals, context
          */
         if (value instanceof Array) {
             return polymorph(element, value, config, globals, context);
+        }
+    
+        /**
+         * Handle `modifiers`
+         */
+        if (key.indexOf('modifier(') > -1) {
+            const modifier = key.replace('modifier(', '').replace(/\)/g, '');
+
+            if (sQuery.hasModifier.bind({ DOMNodes: element, componentGlue, modifierGlue })(modifier)) {
+                polymorph(element, value, config, globals, modifier);
+            }
+
+            return;
         }
 
         /**
@@ -149,23 +184,28 @@ export default function polymorph(element, styles, config = {}, globals, context
          * Handle `hover` interaction
          */
         if (key === ':hover') {
-            if (!context) {
+            if (!element.polymorph.rules.some(state => stringifyState(state.rule) === stringifyState(value))) {
+                console.log(value);
+                element.polymorph.rules.push({
+                    rule: value, context: 'mouseover'
+                });
+            }
+
+            if (!element.polymorph.listeners.includes('mouseover')) {
                 element.addEventListener('mouseover', function mouseover() {
-                    polymorph(element, value, config, globals, 'mouseover');
+                    console.log('foo');
+
+                    if (!element.polymorph.listeners.includes('mouseover')) {
+                        element.polymorph.listeners.push('mouseover');
+                    }
+
+                    element.repaint('mouseover');
                 }, false);
 
                 element.addEventListener('mouseout', function mouseout() {
-                    // let f = {};
+                    element.polymorph.context = element.polymorph.context.filter(item => item !== 'mouseover');
 
-                    // for (let [key, value] of Object.entries(element.polymorph.data)) {
-                    //     f[key] = value.prevState;
-                    // }
-
-                    // console.log(f);
-
-                    polymorph(element, value, config, globals, 'reset');
-
-                    element.repaint('repaint');
+                    element.repaint(element.polymorph.context);
                 }, false);
             }
 
@@ -186,19 +226,6 @@ export default function polymorph(element, styles, config = {}, globals, context
 
                     element.repaint('blur');
                 }, false);
-            }
-
-            return;
-        }
-    
-        /**
-         * Handle `modifiers`
-         */
-        if (key.indexOf('modifier(') > -1) {
-            const modifier = key.replace('modifier(', '').replace(/\)/g, '');
-
-            if (sQuery.hasModifier.bind({ DOMNodes: element, componentGlue, modifierGlue })(modifier)) {
-                polymorph(element, value, config, globals, context);
             }
 
             return;
@@ -244,22 +271,12 @@ export default function polymorph(element, styles, config = {}, globals, context
         if (!isNaN(key)) return;
 
         /**
-         * Reverse styles applied by hover
-         */
-        if (context === 'reset') {
-            console.log(key, value);
-            return element.style[key] = element.polymorph.data[key] ? element.polymorph.data[key].prevState : 'initial';
-        }
-
-        /**
          * Apply the CSS property to the element
          */
-        element.polymorph.data[key] = {
-            prevState: element.style[key],
-            context: context
-        }
-
-        // console.log(key, element.polymorph.data[key])
+        // element.polymorph.data[key] = {
+        //     prevState: element.style[key],
+        //     context: context
+        // }
         
         element.style[key] = value;
     });
