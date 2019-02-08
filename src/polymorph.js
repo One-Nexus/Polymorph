@@ -87,8 +87,9 @@ export default function polymorph(element, styles, config = {}, globals, context
             element.polymorph.context = element.polymorph.context.concat(context);
         }
 
+        console.log(element, element.polymorph.context)
+
         element.polymorph.rules.forEach(STYLESHEET => {
-            console.log(STYLESHEET, context);
             if (!STYLESHEET.context || STYLESHEET.context === context) {
                 polymorph(element, STYLESHEET.rule, config, globals, context);
             }
@@ -101,6 +102,8 @@ export default function polymorph(element, styles, config = {}, globals, context
     Object.entries(STYLESHEETS).forEach(entry => {
         const [key, value] = [entry[0], entry[1]];
 
+        // @TODO, sometimes `element` is a component/sub-component, so `parentElement` needs
+        // to somehow be determined
         let COMPONENTS = sQuery.getComponents.bind({ 
             DOMNodes: element, componentGlue, modifierGlue 
         })(key);
@@ -185,29 +188,31 @@ export default function polymorph(element, styles, config = {}, globals, context
          */
         if (key === ':hover') {
             if (!element.polymorph.rules.some(state => stringifyState(state.rule) === stringifyState(value))) {
-                console.log(value);
                 element.polymorph.rules.push({
                     rule: value, context: 'mouseover'
                 });
             }
 
-            if (!element.polymorph.listeners.includes('mouseover')) {
-                element.addEventListener('mouseover', function mouseover() {
-                    console.log('foo');
+            // if (!element.polymorph.listeners.some(listener => stringifyState(listener.state) === stringifyState(value))) {
+            //     if (!element.polymorph.listeners.some(listener => stringifyState(listener.state) === stringifyState(value))) {
+            //         element.polymorph.listeners.push({
+            //             state: value,
+            //             context: 'mouseover'
+            //         });
+            //     }
 
-                    if (!element.polymorph.listeners.includes('mouseover')) {
-                        element.polymorph.listeners.push('mouseover');
-                    }
+            //     element.addEventListener('mouseover', function mouseover() {
+            //         // console.log(element, 'foo', value);
 
-                    element.repaint('mouseover');
-                }, false);
+            //         element.repaint('mouseover');
+            //     }, false);
 
-                element.addEventListener('mouseout', function mouseout() {
-                    element.polymorph.context = element.polymorph.context.filter(item => item !== 'mouseover');
+            //     element.addEventListener('mouseout', function mouseout() {
+            //         element.polymorph.context = element.polymorph.context.filter(item => item !== 'mouseover');
 
-                    element.repaint(element.polymorph.context);
-                }, false);
-            }
+            //         element.repaint(element.polymorph.context.length ? element.polymorph.context : null);
+            //     }, false);
+            // }
 
             return;
         }
@@ -280,6 +285,21 @@ export default function polymorph(element, styles, config = {}, globals, context
         
         element.style[key] = value;
     });
+
+    if (!element.polymorph.listeners.includes('mouseover')) {
+        element.polymorph.listeners.push('mouseover');
+
+        element.addEventListener('mouseover', function mouseover() {
+
+            element.repaint('mouseover');
+        }, false);
+
+        element.addEventListener('mouseout', function mouseover() {
+            // console.log('foo');
+
+            element.repaint('mouseleave');
+        }, false);
+    }
 }
 
 /**
