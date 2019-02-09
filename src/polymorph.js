@@ -23,7 +23,7 @@ export default function polymorph(element, styles, config = {}, globals, context
      * Setup data interface
      */
     element.polymorph = element.polymorph || {
-        rules: [], data: {}, context: [], listeners: []
+        rules: [], data: [], context: [], listeners: []
     }
 
     /**
@@ -57,7 +57,7 @@ export default function polymorph(element, styles, config = {}, globals, context
         });
     }
 
-    if (context && !element.polymorph.context.includes(context)) {
+    if (context && context !== 'reset' && !element.polymorph.context.includes(context)) {
         element.polymorph.context.push(context);
     }
 
@@ -78,16 +78,22 @@ export default function polymorph(element, styles, config = {}, globals, context
         })();
 
         if (context === 'reset') {
-            element.polymorph.context = [];
-
-            [...COMPONENTS, ...SUB_COMPONENTS].forEach(COMPONENT => COMPONENT.polymorph.context = []);
+            [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(node => {
+                node.polymorph.context = [];
+            });
         }
 
-        if (context && !element.polymorph.context.includes(context)) {
+        if (context && context !== 'reset' && !element.polymorph.context.includes(context)) {
             element.polymorph.context = element.polymorph.context.concat(context);
         }
 
-        console.log(element, element.polymorph.context)
+        [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(node => {
+            node.polymorph.data.forEach(data => {
+                node.style[data.property] = data.prevValue;
+            });
+
+            node.polymorph.data = [];
+        });
 
         element.polymorph.rules.forEach(STYLESHEET => {
             if (!STYLESHEET.context || STYLESHEET.context === context) {
@@ -102,8 +108,6 @@ export default function polymorph(element, styles, config = {}, globals, context
     Object.entries(STYLESHEETS).forEach(entry => {
         const [key, value] = [entry[0], entry[1]];
 
-        // @TODO, sometimes `element` is a component/sub-component, so `parentElement` needs
-        // to somehow be determined
         let COMPONENTS = sQuery.getComponents.bind({ 
             DOMNodes: element, componentGlue, modifierGlue 
         })(key);
@@ -136,6 +140,7 @@ export default function polymorph(element, styles, config = {}, globals, context
          * Smart handle `components`
          */
         if (COMPONENTS.length) {
+            console.log(element, COMPONENTS)
             return COMPONENTS.forEach(COMPONENT => polymorph(COMPONENT, value, config, globals, context));
         }
 
@@ -143,9 +148,9 @@ export default function polymorph(element, styles, config = {}, globals, context
          * Smart handle `sub-components`
          */
         if (SUB_COMPONENTS.length) {
+            // @TODO look to move this logic to sQuery
             if (value.disableCascade) {
                 SUB_COMPONENTS = SUB_COMPONENTS.filter(subComponent => {
-                    // @TODO look to move this logic to sQuery
                     const componentName = element.getAttribute('data-component') || [...element.classList].reduce((accumulator, currentValue) => {
                         if (currentValue.indexOf(componentGlue) > 1) {
                             currentValue = currentValue.substring(currentValue.lastIndexOf(componentGlue) + 1, currentValue.length);
@@ -163,6 +168,7 @@ export default function polymorph(element, styles, config = {}, globals, context
                     return element === parentSubComponent;
                 });
             }
+            // console.log(element, key, value, SUB_COMPONENTS);
 
             return SUB_COMPONENTS.forEach(SUB_COMPONENT => polymorph(SUB_COMPONENT, value, config, globals, context));
         }
@@ -191,28 +197,21 @@ export default function polymorph(element, styles, config = {}, globals, context
                 element.polymorph.rules.push({
                     rule: value, context: 'mouseover'
                 });
+
+                if (!element.polymorph.listeners.includes('mouseover')) {
+                    element.addEventListener('mouseenter', function mouseover() {
+                        element.repaint('mouseover');
+                    }, false);
+
+                    element.addEventListener('mouseleave', function mouseover() {
+                        element.polymorph.context = element.polymorph.context.filter(item => item !== 'mouseover');
+
+                        element.repaint(element.polymorph.context.length ? element.polymorph.context : null);
+                    }, false);
+    
+                    element.polymorph.listeners.push('mouseover');
+                }
             }
-
-            // if (!element.polymorph.listeners.some(listener => stringifyState(listener.state) === stringifyState(value))) {
-            //     if (!element.polymorph.listeners.some(listener => stringifyState(listener.state) === stringifyState(value))) {
-            //         element.polymorph.listeners.push({
-            //             state: value,
-            //             context: 'mouseover'
-            //         });
-            //     }
-
-            //     element.addEventListener('mouseover', function mouseover() {
-            //         // console.log(element, 'foo', value);
-
-            //         element.repaint('mouseover');
-            //     }, false);
-
-            //     element.addEventListener('mouseout', function mouseout() {
-            //         element.polymorph.context = element.polymorph.context.filter(item => item !== 'mouseover');
-
-            //         element.repaint(element.polymorph.context.length ? element.polymorph.context : null);
-            //     }, false);
-            // }
 
             return;
         }
@@ -221,19 +220,7 @@ export default function polymorph(element, styles, config = {}, globals, context
          * Handle `focus` interaction
          */
         if (key === ':focus') {
-            if (!context) {
-                element.addEventListener('focus', function focus() {
-                    polymorph(element, value, config, globals, 'focus');
-                }, false);
 
-                element.addEventListener('blur', function blur() {
-                    polymorph(element, value, config, globals, 'reset');
-
-                    element.repaint('blur');
-                }, false);
-            }
-
-            return;
         }
 
         /**
@@ -275,31 +262,19 @@ export default function polymorph(element, styles, config = {}, globals, context
          */
         if (!isNaN(key)) return;
 
+
+        // @TODO don't push if already includes
+        if (context) {
+            element.polymorph.data.push({
+                context, property: key, prevValue: element.style[key]
+            });
+        }
+
         /**
          * Apply the CSS property to the element
          */
-        // element.polymorph.data[key] = {
-        //     prevState: element.style[key],
-        //     context: context
-        // }
-        
         element.style[key] = value;
     });
-
-    if (!element.polymorph.listeners.includes('mouseover')) {
-        element.polymorph.listeners.push('mouseover');
-
-        element.addEventListener('mouseover', function mouseover() {
-
-            element.repaint('mouseover');
-        }, false);
-
-        element.addEventListener('mouseout', function mouseover() {
-            // console.log('foo');
-
-            element.repaint('mouseleave');
-        }, false);
-    }
 }
 
 /**
