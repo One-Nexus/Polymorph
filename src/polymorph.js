@@ -23,7 +23,7 @@ export default function polymorph(element, styles, config = {}, globals, context
      * Setup data interface
      */
     element.polymorph = element.polymorph || {
-        rules: [], data: [], context: [], listeners: []
+        rules: [], data: {}, context: [], listeners: []
     }
 
     /**
@@ -88,12 +88,14 @@ export default function polymorph(element, styles, config = {}, globals, context
         }
 
         [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(node => {
-            node.polymorph.data.forEach(data => {
-                node.style[data.property] = data.prevValue;
+            Object.entries(node.polymorph.data).forEach(data => {
+                node.style[data[0]] = data[1].prevValue;
             });
 
-            node.polymorph.data = [];
+            node.polymorph.data = {};
         });
+
+        console.log(element);
 
         element.polymorph.rules.forEach(STYLESHEET => {
             if (!STYLESHEET.context || STYLESHEET.context === context) {
@@ -107,6 +109,8 @@ export default function polymorph(element, styles, config = {}, globals, context
      */
     Object.entries(STYLESHEETS).forEach(entry => {
         const [key, value] = [entry[0], entry[1]];
+
+        let MODULES = {};
 
         let COMPONENTS = sQuery.getComponents.bind({ 
             DOMNodes: element, componentGlue, modifierGlue 
@@ -140,8 +144,25 @@ export default function polymorph(element, styles, config = {}, globals, context
          * Smart handle `components`
          */
         if (COMPONENTS.length) {
-            console.log(element, COMPONENTS)
-            return COMPONENTS.forEach(COMPONENT => polymorph(COMPONENT, value, config, globals, context));
+            const _COMPONENTS = COMPONENTS.filter(component => {
+                const moduleName = element.getAttribute('data-module') || [...element.classList].reduce((accumulator, currentValue) => {
+                    if (currentValue.indexOf(componentGlue) !== -1) {
+                        return currentValue.split(modifierGlue)[0].split(componentGlue)[0];
+                    }
+                }, []);
+
+                const parentModule = sQuery.parent.bind({ 
+                    DOMNodes: component,
+                    modifierGlue: modifierGlue,
+                    componentGlue: componentGlue
+                })(moduleName);
+
+                return element === parentModule;
+            });
+
+            console.log(COMPONENTS, _COMPONENTS);
+
+            return _COMPONENTS.forEach(COMPONENT => polymorph(COMPONENT, value, config, globals, context));
         }
 
         /**
@@ -168,6 +189,7 @@ export default function polymorph(element, styles, config = {}, globals, context
                     return element === parentSubComponent;
                 });
             }
+
             // console.log(element, key, value, SUB_COMPONENTS);
 
             return SUB_COMPONENTS.forEach(SUB_COMPONENT => polymorph(SUB_COMPONENT, value, config, globals, context));
@@ -265,9 +287,9 @@ export default function polymorph(element, styles, config = {}, globals, context
 
         // @TODO don't push if already includes
         if (context) {
-            element.polymorph.data.push({
-                context, property: key, prevValue: element.style[key]
-            });
+            element.polymorph.data[key] = {
+                context, prevValue: element.style[key]
+            }
         }
 
         /**
