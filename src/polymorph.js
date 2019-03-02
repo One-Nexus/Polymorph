@@ -95,7 +95,7 @@ export default function polymorph(element, styles, config = {}, globals, context
             node.polymorph.data = {};
         });
 
-        console.log(element);
+        // console.log(element);
 
         element.polymorph.rules.forEach(STYLESHEET => {
             if (!STYLESHEET.context || STYLESHEET.context === context) {
@@ -144,6 +144,7 @@ export default function polymorph(element, styles, config = {}, globals, context
          * Smart handle `components`
          */
         if (COMPONENTS.length) {
+            // @TODO look to move this logic to sQuery
             const _COMPONENTS = COMPONENTS.filter(component => {
                 const moduleName = element.getAttribute('data-module') || [...element.classList].reduce((accumulator, currentValue) => {
                     if (currentValue.indexOf(componentGlue) !== -1) {
@@ -157,10 +158,20 @@ export default function polymorph(element, styles, config = {}, globals, context
                     componentGlue: componentGlue
                 })(moduleName);
 
-                return element === parentModule;
-            });
+                if (element.matches(`.${moduleName}, [class*="${moduleName + modifierGlue}"]`)) {
+                    return element === parentModule;
+                }
 
-            console.log(COMPONENTS, _COMPONENTS);
+                else {
+                    const targetModule = sQuery.parent.bind({ 
+                        DOMNodes: element,
+                        modifierGlue: modifierGlue,
+                        componentGlue: componentGlue
+                    })(moduleName);
+
+                    return targetModule === parentModule;
+                }
+            });
 
             return _COMPONENTS.forEach(COMPONENT => polymorph(COMPONENT, value, config, globals, context));
         }
@@ -189,8 +200,6 @@ export default function polymorph(element, styles, config = {}, globals, context
                     return element === parentSubComponent;
                 });
             }
-
-            // console.log(element, key, value, SUB_COMPONENTS);
 
             return SUB_COMPONENTS.forEach(SUB_COMPONENT => polymorph(SUB_COMPONENT, value, config, globals, context));
         }
