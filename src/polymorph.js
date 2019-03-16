@@ -6,10 +6,10 @@ var sQuery = (typeof window !== 'undefined') && window.sQuery;
 // `process` and `require` are exploited to help reduce bundle size
 if (!sQuery || (typeof process !== 'undefined' && !process.env.SYNERGY)) {
     sQuery = {
-        getComponents: require('../../../sQuery/sQuery/src/api/getComponents').default,
-        getSubComponents: require('../../../sQuery/sQuery/src/api/getSubComponents').default,
-        hasModifier: require('../../../sQuery/sQuery/src/api/hasModifier').default,
-        parent: require('../../../sQuery/sQuery/src/api/parent').default
+        getComponents: require('../../../sQuery/sQuery/refactor/api/getComponents').default,
+        getSubComponents: require('../../../sQuery/sQuery/refactor/api/getSubComponents').default,
+        hasModifier: require('../../../sQuery/sQuery/refactor/api/hasModifier').default,
+        parent: require('../../../sQuery/sQuery/refactor/api/parent').default
     }
 }
 
@@ -70,12 +70,12 @@ export default function polymorph(element, styles, config = {}, globals, context
         }
 
         let COMPONENTS = sQuery.getComponents.bind({ 
-            DOMNodes: element, componentGlue, modifierGlue 
-        })();
+            componentGlue, modifierGlue 
+        })(element);
 
         let SUB_COMPONENTS = sQuery.getSubComponents.bind({ 
-            DOMNodes: element, componentGlue, modifierGlue
-        })();
+            componentGlue, modifierGlue
+        })(element);
 
         if (context === 'reset') {
             [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(node => {
@@ -110,15 +110,13 @@ export default function polymorph(element, styles, config = {}, globals, context
     Object.entries(STYLESHEETS).forEach(entry => {
         const [key, value] = [entry[0], entry[1]];
 
-        let MODULES = {};
-
         let COMPONENTS = sQuery.getComponents.bind({ 
-            DOMNodes: element, componentGlue, modifierGlue 
-        })(key);
+            componentGlue, modifierGlue 
+        })(element, key);
 
         let SUB_COMPONENTS = sQuery.getSubComponents.bind({ 
-            DOMNodes: element, componentGlue, modifierGlue
-        })(key);
+            componentGlue, modifierGlue
+        })(element, key);
 
         /**
          * Handle case where desired element for styles to be applied is manually controlled
@@ -133,7 +131,7 @@ export default function polymorph(element, styles, config = {}, globals, context
         if (key.indexOf('modifier(') > -1) {
             const modifier = key.replace('modifier(', '').replace(/\)/g, '');
 
-            if (sQuery.hasModifier.bind({ DOMNodes: element, componentGlue, modifierGlue })(modifier)) {
+            if (sQuery.hasModifier.bind({ componentGlue, modifierGlue })(element, modifier)) {
                 polymorph(element, value, config, globals, modifier);
             }
 
@@ -144,36 +142,7 @@ export default function polymorph(element, styles, config = {}, globals, context
          * Smart handle `components`
          */
         if (COMPONENTS.length) {
-            // @TODO look to move this logic to sQuery
-            const _COMPONENTS = COMPONENTS.filter(component => {
-                const moduleName = element.getAttribute('data-module') || [...element.classList].reduce((accumulator, currentValue) => {
-                    if (currentValue.indexOf(componentGlue) !== -1) {
-                        return currentValue.split(modifierGlue)[0].split(componentGlue)[0];
-                    }
-                }, []);
-
-                const parentModule = sQuery.parent.bind({ 
-                    DOMNodes: component,
-                    modifierGlue: modifierGlue,
-                    componentGlue: componentGlue
-                })(moduleName);
-
-                if (element.matches(`.${moduleName}, [class*="${moduleName + modifierGlue}"]`)) {
-                    return element === parentModule;
-                }
-
-                else {
-                    const targetModule = sQuery.parent.bind({ 
-                        DOMNodes: element,
-                        modifierGlue: modifierGlue,
-                        componentGlue: componentGlue
-                    })(moduleName);
-
-                    return targetModule === parentModule;
-                }
-            });
-
-            return _COMPONENTS.forEach(COMPONENT => polymorph(COMPONENT, value, config, globals, context));
+            return COMPONENTS.forEach(COMPONENT => polymorph(COMPONENT, value, config, globals, context));
         }
 
         /**
@@ -191,11 +160,10 @@ export default function polymorph(element, styles, config = {}, globals, context
                         }
                     }, []);
 
-                    const parentSubComponent = sQuery.parent.bind({ 
-                        DOMNodes: subComponent,
+                    const parentSubComponent = sQuery.parent.bind({
                         modifierGlue: modifierGlue,
                         componentGlue: componentGlue
-                    })(componentName);
+                    })(subComponent, componentName);
 
                     return element === parentSubComponent;
                 });
@@ -209,7 +177,7 @@ export default function polymorph(element, styles, config = {}, globals, context
          */
         if (key.indexOf('subComponent(') > -1) {
             const subComponent = key.replace('subComponent(', '').replace(/\)/g, '');
-            const subComponents = sQuery.getSubComponents.bind({ DOMNodes: element, componentGlue, modifierGlue })(subComponent);
+            const subComponents = sQuery.getSubComponents.bind({ componentGlue, modifierGlue })(element, subComponent);
 
             if (subComponents.length) {
                 subComponents.forEach(_component => {
@@ -293,7 +261,6 @@ export default function polymorph(element, styles, config = {}, globals, context
          */
         if (!isNaN(key)) return;
 
-
         // @TODO don't push if already includes
         if (context) {
             element.polymorph.data[key] = {
@@ -317,11 +284,10 @@ polymorph.modifier = (element, modifier, modifierGlue, componentGlue) => {
     modifierGlue  = modifierGlue  || Synergy.modifierGlue  || '-';
     componentGlue = componentGlue || Synergy.componentGlue || '_';
 
-    return sQuery.hasModifier.bind({ 
-        DOMNodes: element,
+    return sQuery.hasModifier.bind({
         modifierGlue,
         componentGlue
-    })(modifier);
+    })(element, modifier);
 }
 
 /**
