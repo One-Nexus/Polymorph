@@ -13,62 +13,39 @@ if (!sQuery || (typeof process !== 'undefined' && !process.env.SYNERGY)) {
     }
 }
 
-export default function polymorph(element, styles, config = {}, globals, context) {
+export default function polymorph(element, styles, config = {}, globals) {
     var Synergy = window.Synergy || {};
 
     const modifierGlue  = config.modifierGlue  || Synergy.modifierGlue  || '-';
     const componentGlue = config.componentGlue || Synergy.componentGlue || '_';
 
-    /**
-     * Setup data interface
-     */
+    // Setup data interface
     element.polymorph = element.polymorph || {
-        rules: [], data: {}, context: [], listeners: []
+        default: {}, rules: []
     }
 
-    /**
-     * Handle case where desired element for styles to be applied is manually controlled
-     */
+    // Handle case where desired element for styles to be applied is manually controlled
     if (styles instanceof Array) {
         if (styles[0] instanceof HTMLElement) {
-            return polymorph(styles[0], styles[1], config, globals, context);
+            return polymorph(styles[0], styles[1], config, globals);
         }
 
         if (styles[0] instanceof NodeList) {
-            return styles[0].forEach(node => polymorph(node, styles[1], config, globals, context));
+            return styles[0].forEach(node => polymorph(node, styles[1], config, globals));
         }
     }
 
     let STYLESHEETS = (typeof styles === 'function') ? styles(element, config, globals) : styles;
 
-    /**
-     * Handle array of stylesheets
-     */
+    // Handle array of stylesheets
     if (STYLESHEETS.constructor === Array) {
         if (STYLESHEETS.every(value => value && value.constructor === Object)) {
-            return STYLESHEETS.forEach(value => polymorph(element, value, config, globals, context));
+            return STYLESHEETS.forEach(value => polymorph(element, value, config, globals));
         }
     }
 
-    if (!element.polymorph.rules.some(state => stringifyState(state.rule) === stringifyState(STYLESHEETS))) {
-        element.polymorph.rules.push({
-            rule: STYLESHEETS,
-            context: context
-        });
-    }
-
-    if (context && context !== 'reset' && !element.polymorph.context.includes(context)) {
-        element.polymorph.context.push(context);
-    }
-
-    /**
-     * Setup repaint() method
-     */
-    element.repaint = element.repaint || function(context = 'reset') {
-        if (context && context.constructor === Array && context.length) {
-            return context.forEach(item => element.repaint(item));
-        }
-
+    // Setup repaint() method
+    element.repaint = function(context = 'reset') {
         let COMPONENTS = sQuery.getComponents.bind({ 
             componentGlue, modifierGlue 
         })(element);
@@ -77,36 +54,26 @@ export default function polymorph(element, styles, config = {}, globals, context
             componentGlue, modifierGlue
         })(element);
 
-        if (context === 'reset') {
-            [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(node => {
-                node.polymorph.context = [];
-            });
-        }
-
-        if (context && context !== 'reset' && !element.polymorph.context.includes(context)) {
-            element.polymorph.context = element.polymorph.context.concat(context);
-        }
-
-        [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(node => {
-            Object.entries(node.polymorph.data).forEach(data => {
-                node.style[data[0]] = data[1].prevValue;
-            });
-
-            node.polymorph.data = {};
+        Object.keys(element.polymorph.default).forEach(key => {
+            element.style[key] = element.polymorph.default[key];
         });
 
-        // console.log(element);
+        console.log(COMPONENTS);
 
-        element.polymorph.rules.forEach(STYLESHEET => {
-            if (!STYLESHEET.context || STYLESHEET.context === context) {
-                polymorph(element, STYLESHEET.rule, config, globals, context);
+        element.polymorph.rules.forEach(rule => {
+            if (rule.context === context) {
+                Object.keys(rule.styles).forEach(key => {
+                    element.style[key] = rule.styles[key];
+                });
+            }
+
+            if (sQuery.hasModifier.bind({ componentGlue, modifierGlue })(element, rule.context)) {
+                console.log(element, rule.styles)
             }
         });
     }
 
-    /**
-     * Loop through properties
-     */
+    // Loop through properties
     Object.entries(STYLESHEETS).forEach(entry => {
         const [key, value] = [entry[0], entry[1]];
 
@@ -118,160 +85,77 @@ export default function polymorph(element, styles, config = {}, globals, context
             componentGlue, modifierGlue
         })(element, key);
 
-        /**
-         * Handle case where desired element for styles to be applied is manually controlled
-         */
+        //Handle case where desired element for styles to be applied is manually controlled
         if (value instanceof Array) {
-            return polymorph(element, value, config, globals, context);
-        }
-    
-        /**
-         * Handle `modifiers`
-         */
-        if (key.indexOf('modifier(') > -1) {
-            const modifier = key.replace('modifier(', '').replace(/\)/g, '');
-
-            if (sQuery.hasModifier.bind({ componentGlue, modifierGlue })(element, modifier)) {
-                polymorph(element, value, config, globals, modifier);
-            }
-
-            return;
+            return polymorph(element, value, config, globals);
         }
 
-        /**
-         * Smart handle `components`
-         */
+        // Smart handle `components`
         if (COMPONENTS.length) {
-            return COMPONENTS.forEach(COMPONENT => polymorph(COMPONENT, value, config, globals, context));
+            return COMPONENTS.forEach(COMPONENT => polymorph(COMPONENT, value, config, globals));
         }
 
-        /**
-         * Smart handle `sub-components`
-         */
+        // Smart handle `sub-components`
         if (SUB_COMPONENTS.length) {
-            // @TODO look to move this logic to sQuery
-            if (value.disableCascade) {
-                SUB_COMPONENTS = SUB_COMPONENTS.filter(subComponent => {
-                    const componentName = element.getAttribute('data-component') || [...element.classList].reduce((accumulator, currentValue) => {
-                        if (currentValue.indexOf(componentGlue) > 1) {
-                            currentValue = currentValue.substring(currentValue.lastIndexOf(componentGlue) + 1, currentValue.length);
-
-                            return currentValue.substring(0, currentValue.indexOf(modifierGlue));
-                        }
-                    }, []);
-
-                    const parentSubComponent = sQuery.parent.bind({
-                        modifierGlue: modifierGlue,
-                        componentGlue: componentGlue
-                    })(subComponent, componentName);
-
-                    return element === parentSubComponent;
-                });
-            }
-
-            return SUB_COMPONENTS.forEach(SUB_COMPONENT => polymorph(SUB_COMPONENT, value, config, globals, context));
+            return SUB_COMPONENTS.forEach(SUB_COMPONENT => polymorph(SUB_COMPONENT, value, config, globals));
         }
 
-        /**
-         * Handle `sub-components`
-         */
+        // Handle `sub-components`
         if (key.indexOf('subComponent(') > -1) {
             const subComponent = key.replace('subComponent(', '').replace(/\)/g, '');
             const subComponents = sQuery.getSubComponents.bind({ componentGlue, modifierGlue })(element, subComponent);
 
             if (subComponents.length) {
-                subComponents.forEach(_component => {
-                    polymorph(_component, value, config, globals, context); 
+                subComponents.forEach(subComponent => {
+                    polymorph(subComponent, value, config, globals);
                 });
             }
 
             return;
         }
-
-        /**
-         * Handle `hover` interaction
-         */
-        if (key === ':hover') {
-            if (!element.polymorph.rules.some(state => stringifyState(state.rule) === stringifyState(value))) {
-                element.polymorph.rules.push({
-                    rule: value, context: 'mouseover'
-                });
-
-                if (!element.polymorph.listeners.includes('mouseover')) {
-                    element.addEventListener('mouseenter', function mouseover() {
-                        element.repaint('mouseover');
-                    }, false);
-
-                    element.addEventListener('mouseleave', function mouseover() {
-                        element.polymorph.context = element.polymorph.context.filter(item => item !== 'mouseover');
-
-                        element.repaint(element.polymorph.context.length ? element.polymorph.context : null);
-                    }, false);
     
-                    element.polymorph.listeners.push('mouseover');
-                }
-            }
+        // Handle `modifiers`
+        if (key.indexOf('modifier(') > -1) {
+            const modifier = key.replace('modifier(', '').replace(/\)/g, '');
 
-            return;
-        }
-
-        /**
-         * Handle `focus` interaction
-         */
-        if (key === ':focus') {
-
-        }
-
-        /**
-         * Handle module `group` and `wrapper`
-         */
-        if (key === 'group' || key === 'wrapper') {
-            // @TODO this currently runs for each item in the group/wrapper,
-            // should ideally run just once per group/wrapper
-            element.parentNode.classList.forEach(className => {
-                if (className.indexOf('group') === 0 || className.indexOf('wrapper') === 0) {
-                    const wrapperValues = (typeof value === 'object') ? value : value(element.parentNode);
-                    const childValues   = (typeof value === 'object') ? value : value(element);
-
-                    // apply styles to wrapper/group element
-                    polymorph(element.parentNode, wrapperValues, config, globals, context);
-
-                    // apply styles to child modules
-                    polymorph(element, childValues, config, globals, context);
-                }
+            element.polymorph.rules = element.polymorph.rules.concat({
+                context: modifier,
+                styles: value
             });
 
             return;
         }
 
-        /**
-         * Handle case where CSS `value` to be applied to `element` is a function
-         */
-        if (typeof value === 'function') {
-            if (isValidCssProperty(key)) {
-                element.style[key] = value(element.style[key]);
-            }
+        // Handle `hover` interaction
+        if (key === ':hover') {
+            element.polymorph.rules = element.polymorph.rules.concat({
+                context: 'hover',
+                styles: value
+            });
 
             return;
         }
 
-        /**
-         * Key is not a CSS property
-         * @TODO look for better solution
-         */
-        if (!isNaN(key)) return;
-
-        // @TODO don't push if already includes
-        if (context) {
-            element.polymorph.data[key] = {
-                context, prevValue: element.style[key]
-            }
+        // Handle `focus` interaction
+        if (key === ':focus') {
         }
 
-        /**
-         * Apply the CSS property to the element
-         */
-        element.style[key] = value;
+        element.polymorph.default[key] = value;
+    });
+
+    // paint default/initial styles
+    element.repaint();
+
+    element.polymorph.rules.forEach(rule => {
+        if (rule.context === 'hover') {
+            element.addEventListener('mouseenter', function mouseover() {
+                element.repaint('hover');
+            }, false);
+
+            element.addEventListener('mouseleave', function mouseover() {
+                element.repaint();
+            }, false);
+        }
     });
 }
 
