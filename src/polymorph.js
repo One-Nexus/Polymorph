@@ -70,6 +70,8 @@ function handleStyleSheet(element, stylesheet, config, context) {
                     if (context.length) {
                         [el, ...el.polymorph.COMPONENTS, ...el.polymorph.SUB_COMPONENTS].forEach(_el => {
                             if (_el.polymorph) {
+                                _el.polymorph.currentState = [];
+
                                 const contexts = _el.polymorph.currentState.concat(context.filter(item => {
                                     return _el.polymorph.currentState.indexOf(item) < 0;
                                 }));
@@ -78,6 +80,8 @@ function handleStyleSheet(element, stylesheet, config, context) {
                             }
                         });
                     }
+
+                    console.log(el, el.polymorph.currentState);
 
                     el.polymorph.rules.forEach(rule => {
 
