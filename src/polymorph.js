@@ -45,18 +45,13 @@ export default function polymorph(element, styles, config = {}, globals) {
     }
 
     // paint default/initial styles
-    element.repaint([
-        {
-            source: element,
-            value: ['initial']
-        }
-    ]);
+    element.repaint();
 }
 
 /**
  * 
  */
-function handleStyleSheet(element, stylesheet, config, context) {
+function handleStyleSheet(element, stylesheet, config, context, _context = []) {
     if (!element.polymorph) {
         // Setup data interface
         element.polymorph = {
@@ -66,10 +61,12 @@ function handleStyleSheet(element, stylesheet, config, context) {
         element.polymorph.COMPONENTS = sQuery.getComponents.bind({...config})(element);
         element.polymorph.SUB_COMPONENTS = sQuery.getSubComponents.bind({...config})(element);
 
+        const { COMPONENTS, SUB_COMPONENTS } = element.polymorph;
+
         // Setup repaint() method
         element.repaint = function(_context = []) {
             // Reset the state/context
-            [element, ...element.polymorph.COMPONENTS, ...element.polymorph.SUB_COMPONENTS].forEach(el => {
+            [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(el => {
                 if (el.polymorph) {
                     el.polymorph.currentState = el.polymorph.currentState.filter(state => {
                         if (state.source.contains(el)) {
@@ -81,7 +78,7 @@ function handleStyleSheet(element, stylesheet, config, context) {
                 }
             });
 
-            [element, ...element.polymorph.COMPONENTS, ...element.polymorph.SUB_COMPONENTS].forEach(el => {
+            [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(el => {
                 if (el.polymorph) {
                     const modifiers = sQuery.getModifiers.bind({...config})(el);
 
@@ -103,8 +100,13 @@ function handleStyleSheet(element, stylesheet, config, context) {
                     }
 
                     el.polymorph.rules.forEach(rule => {
-                        if (rule.context && rule.context !== 'default') {
-                            if (el.polymorph.currentState.some(state => state.value.includes(rule.context))) {
+                        if (rule._context.length && !rule._context.includes('default')) {
+                            const curState = el.polymorph.currentState.reduce((states, state) => {
+                                return states.concat(state.value);
+                            }, []);
+
+                            if (rule._context.every(ruleContext => curState.includes(ruleContext))) {
+                                // console.log(curState, rule._context, context);
                                 doStyles(el, rule.styles);
                             }
                         } else {
@@ -118,10 +120,11 @@ function handleStyleSheet(element, stylesheet, config, context) {
 
     element.polymorph.rules = element.polymorph.rules.concat({
         context: context,
+        _context: _context,
         styles: stylesheet
     });
 
-    if (typeof stylesheet === 'function') {
+    if (typeof stylesheet === 'function' && context === 'default') {
         stylesheet = stylesheet(element);
     }
 
@@ -137,14 +140,14 @@ function handleStyleSheet(element, stylesheet, config, context) {
         // Smart handle `components`
         if (COMPONENTS.length) {
             return COMPONENTS.forEach(component => {
-                return handleStyleSheet(component, value, config, context);
+                return handleStyleSheet(component, value, config, context, _context);
             });
         }
 
         // Smart handle `sub-components`
         if (SUB_COMPONENTS.length) {
             return SUB_COMPONENTS.forEach(component => {
-                return handleStyleSheet(component, value, config, context);
+                return handleStyleSheet(component, value, config, context, _context);
             });
         }
 
@@ -160,16 +163,14 @@ function handleStyleSheet(element, stylesheet, config, context) {
         if (key.indexOf('modifier(') > -1) {
             const modifier = key.replace('modifier(', '').replace(/\)/g, '');
 
-            return handleStyleSheet(element, value, config, modifier);
+            return handleStyleSheet(element, value, config, modifier, _context.concat(modifier));
         }
 
         // Handle `hover` interaction
         if (key === ':hover') {
-            handleStyleSheet(element, value, config, 'hover');
+            handleStyleSheet(element, value, config, 'hover', _context.concat('hover'));
 
             element.addEventListener('mouseenter', event => {
-                // console.log(element, value);
-                // doStyles(element, value);
                 element.repaint([
                     {
                         value: ['hover'],
