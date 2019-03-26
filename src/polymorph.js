@@ -21,18 +21,6 @@ export default function polymorph(element, styles, config = {}, globals) {
     const componentGlue = config.componentGlue || Synergy.componentGlue || '_';
 
     const CONFIG = { componentGlue, modifierGlue };
-
-    // Handle case where desired element for styles to be applied is manually controlled
-    if (styles.constructor === Array) {
-        if (styles[0] instanceof HTMLElement) {
-            return polymorph(styles[0], styles[1], config, globals);
-        }
-
-        if (styles[0] instanceof NodeList) {
-            return styles[0].forEach(node => polymorph(node, styles[1], config, globals));
-        }
-    }
-
     const STYLESHEET = (typeof styles === 'function') ? styles(element, config, globals) : styles;
 
     // Loop through properties
@@ -107,6 +95,10 @@ function handleStyleSheet(element, stylesheet, config, context, _context = []) {
 
                             if (rule._context.every(ruleContext => curState.includes(ruleContext))) {
                                 // console.log(curState, rule._context, context);
+
+                                if (el.className === 'navigation__dropdown') {
+                                    // console.log(el, rule.styles);
+                                }
                                 doStyles(el, rule.styles);
                             }
                         } else {
@@ -133,8 +125,14 @@ function handleStyleSheet(element, stylesheet, config, context, _context = []) {
         const SUB_COMPONENTS = sQuery.getSubComponents.bind({...config})(element, key);
 
         //Handle case where desired element for styles to be applied is manually controlled
-        if (value instanceof Array) {
-
+        if (value instanceof Array && value[0]) {
+            if (value[0] instanceof HTMLElement) {
+                return handleStyleSheet(value[0], value[1], config, context, _context);
+            }
+    
+            if (value[0] instanceof NodeList) {
+                return value[0].forEach(node => handleStyleSheet(node, value[1], config, context, _context));
+            }
         }
 
         // Smart handle `components`
@@ -198,6 +196,9 @@ function handleStyleSheet(element, stylesheet, config, context, _context = []) {
  */
 function doStyles(el, styles) {
     Object.entries(typeof styles === 'function' ? styles(el) : styles).forEach(([key, value]) => {
+        if (el.className === 'navigation__dropdown') {
+            console.log(el, key, value);
+        }
         el.style[key] = value;
     });
 }
