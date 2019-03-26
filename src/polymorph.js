@@ -26,10 +26,10 @@ export default function polymorph(element, styles, config = {}, globals) {
     // Loop through properties
     if (STYLESHEET.constructor === Array) {
         if (STYLESHEET.every(value => value && value.constructor === Object)) {
-            STYLESHEET.forEach(value => handleStyleSheet(element, value, CONFIG, 'default'));
+            STYLESHEET.forEach(value => handleStyleSheet(element, value, CONFIG));
         }
     } else {
-        handleStyleSheet(element, STYLESHEET, CONFIG, 'default');
+        handleStyleSheet(element, STYLESHEET, CONFIG);
     }
 
     // paint default/initial styles
@@ -39,11 +39,12 @@ export default function polymorph(element, styles, config = {}, globals) {
 /**
  * 
  */
-function handleStyleSheet(element, stylesheet, config, context, _context = []) {
+function handleStyleSheet(element, stylesheet, config, context = []) {
     if (!element.polymorph) {
         // Setup data interface
         element.polymorph = {
-            default: {}, rules: [], currentState: []
+            // default: {}, rules: [], currentState: []
+            rules: []
         }
 
         element.polymorph.COMPONENTS = sQuery.getComponents.bind({...config})(element);
@@ -52,59 +53,19 @@ function handleStyleSheet(element, stylesheet, config, context, _context = []) {
         const { COMPONENTS, SUB_COMPONENTS } = element.polymorph;
 
         // Setup repaint() method
-        element.repaint = function(_context = []) {
-            // Reset the state/context
+        element.repaint = function() {
             [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(el => {
                 if (el.polymorph) {
-                    el.polymorph.currentState = el.polymorph.currentState.filter(state => {
-                        if (state.source.contains(el)) {
-                            if (state.value.every(_state => sQuery.hasModifier.bind({...config})(state.source, _state))) {
-                                return true;
-                            }
-                        }
-                    }).concat(_context);
-                }
-            });
-
-            [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(el => {
-                if (el.polymorph) {
-                    const modifiers = sQuery.getModifiers.bind({...config})(el);
-
-                    if (modifiers.length) {
-                        [el, ...el.polymorph.COMPONENTS, ...el.polymorph.SUB_COMPONENTS].forEach(_el => {
-                            if (_el.polymorph) {
-                                const context = {
-                                    value: modifiers,
-                                    source: el
-                                }
-
-                                if (_el.polymorph.currentState.some(state => JSON.stringify(state.value) === JSON.stringify(modifiers) && state.source === el)) {
-                                    return;
-                                }
-
-                                _el.polymorph.currentState = _el.polymorph.currentState.concat(context);
-                            }
-                        });
-                    }
-
                     el.polymorph.rules.forEach(rule => {
-                        if (rule._context.length && !rule._context.includes('default')) {
-                            const curState = el.polymorph.currentState.reduce((states, state) => {
-                                return states.concat(state.value);
-                            }, []);
-
-                            if (rule._context.every(ruleContext => curState.includes(ruleContext))) {
-                                // console.log(curState, rule._context, context);
-
-                                if (el.className === 'navigation__dropdown') {
-                                    // console.log(el, rule.styles);
-                                }
-                                doStyles(el, rule.styles);
+                        if (rule.context.every(ruleContext => {
+                            if (ruleContext.value === 'hover') {
+                                return ruleContext.source.polymorph.isHovered;
                             }
-                        } else {
+                            return sQuery.hasModifier.bind({...config})(ruleContext.source, ruleContext.value)
+                        })) {
                             doStyles(el, rule.styles);
                         }
-                    })
+                    });
                 }
             });
         };
@@ -112,40 +73,60 @@ function handleStyleSheet(element, stylesheet, config, context, _context = []) {
 
     element.polymorph.rules = element.polymorph.rules.concat({
         context: context,
-        _context: _context,
+        context: context,
         styles: stylesheet
     });
 
-    if (typeof stylesheet === 'function' && context === 'default') {
+    if (typeof stylesheet === 'function') {
         stylesheet = stylesheet(element);
     }
 
     Object.entries(stylesheet).forEach(([key, value]) => {
         const COMPONENTS = sQuery.getComponents.bind({...config})(element, key);
-        const SUB_COMPONENTS = sQuery.getSubComponents.bind({...config})(element, key);
+        let SUB_COMPONENTS = sQuery.getSubComponents.bind({...config})(element, key);
 
         //Handle case where desired element for styles to be applied is manually controlled
         if (value instanceof Array && value[0]) {
             if (value[0] instanceof HTMLElement) {
-                return handleStyleSheet(value[0], value[1], config, context, _context);
+                return handleStyleSheet(value[0], value[1], config, context);
             }
     
             if (value[0] instanceof NodeList) {
-                return value[0].forEach(node => handleStyleSheet(node, value[1], config, context, _context));
+                return value[0].forEach(node => handleStyleSheet(node, value[1], config, context));
             }
         }
 
         // Smart handle `components`
         if (COMPONENTS.length) {
             return COMPONENTS.forEach(component => {
-                return handleStyleSheet(component, value, config, context, _context);
+                return handleStyleSheet(component, value, config, context);
             });
         }
 
         // Smart handle `sub-components`
         if (SUB_COMPONENTS.length) {
+            if (value.disableCascade) {
+                SUB_COMPONENTS = SUB_COMPONENTS.filter(subComponent => {
+                    const componentName = [...element.classList].reduce((accumulator, currentValue) => {
+                        if (currentValue.indexOf(config.componentGlue) > 1) {
+                            currentValue = currentValue.substring(currentValue.lastIndexOf(config.componentGlue) + 1, currentValue.length);
+
+                            return currentValue.substring(1, currentValue.indexOf(config.modifierGlue));
+                        }
+                    }, []);
+
+                    const parentSubComponent = sQuery.parent.bind({...config})(subComponent, componentName);
+
+                    if (parentSubComponent) {
+                        // console.log(subComponent, parentSubComponent);
+                    }
+
+                    // return element === parentSubComponent;
+                });
+            }
+
             return SUB_COMPONENTS.forEach(component => {
-                return handleStyleSheet(component, value, config, context, _context);
+                return handleStyleSheet(component, value, config, context);
             });
         }
 
@@ -161,23 +142,28 @@ function handleStyleSheet(element, stylesheet, config, context, _context = []) {
         if (key.indexOf('modifier(') > -1) {
             const modifier = key.replace('modifier(', '').replace(/\)/g, '');
 
-            return handleStyleSheet(element, value, config, modifier, _context.concat(modifier));
+            return handleStyleSheet(element, value, config, context.concat({
+                source: element,
+                value: modifier
+            }));
         }
 
         // Handle `hover` interaction
         if (key === ':hover') {
-            handleStyleSheet(element, value, config, 'hover', _context.concat('hover'));
+            handleStyleSheet(element, value, config, context.concat({
+                source: element,
+                value: 'hover'
+            }));
 
             element.addEventListener('mouseenter', event => {
-                element.repaint([
-                    {
-                        value: ['hover'],
-                        source: element
-                    }
-                ]);
+                element.polymorph.isHovered = true;
+
+                element.repaint();
             });
 
             element.addEventListener('mouseleave', event => {
+                delete element.polymorph.isHovered;
+
                 element.repaint();
             });
 
@@ -189,6 +175,11 @@ function handleStyleSheet(element, stylesheet, config, context, _context = []) {
             return;
         }
     });
+
+    // Sort Array to ensure rules without context are applied first
+    element.polymorph.rules.sort((a, b) => {
+        return a.context.length - b.context.length;
+    });
 }
 
 /**
@@ -196,9 +187,6 @@ function handleStyleSheet(element, stylesheet, config, context, _context = []) {
  */
 function doStyles(el, styles) {
     Object.entries(typeof styles === 'function' ? styles(el) : styles).forEach(([key, value]) => {
-        if (el.className === 'navigation__dropdown') {
-            console.log(el, key, value);
-        }
         el.style[key] = value;
     });
 }
