@@ -1,4 +1,3 @@
-import isValidCssProperty from './utilities/isValidCssProperty';
 import stringifyState from './utilities/stringifyState';
 
 var sQuery = (typeof window !== 'undefined') && window.sQuery;
@@ -8,7 +7,6 @@ if (!sQuery || (typeof process !== 'undefined' && !process.env.SYNERGY)) {
     sQuery = {
         getComponents: require('../../../sQuery/sQuery/refactor/api/getComponents').default,
         getSubComponents: require('../../../sQuery/sQuery/refactor/api/getSubComponents').default,
-        getModifiers: require('../../../sQuery/sQuery/refactor/api/getModifiers').default,
         hasModifier: require('../../../sQuery/sQuery/refactor/api/hasModifier').default,
         parent: require('../../../sQuery/sQuery/refactor/api/parent').default
     }
@@ -23,7 +21,6 @@ export default function polymorph(element, styles, config = {}, globals) {
     const CONFIG = { componentGlue, modifierGlue };
     const STYLESHEET = (typeof styles === 'function') ? styles(element, config, globals) : styles;
 
-    // Loop through properties
     if (STYLESHEET.constructor === Array) {
         if (STYLESHEET.every(value => value && value.constructor === Object)) {
             STYLESHEET.forEach(value => handleStyleSheet(element, value, CONFIG));
@@ -32,7 +29,6 @@ export default function polymorph(element, styles, config = {}, globals) {
         handleStyleSheet(element, STYLESHEET, CONFIG);
     }
 
-    // paint default/initial styles
     element.repaint();
 }
 
@@ -41,18 +37,14 @@ export default function polymorph(element, styles, config = {}, globals) {
  */
 function handleStyleSheet(element, stylesheet, config, context = []) {
     if (!element.polymorph) {
-        // Setup data interface
         element.polymorph = {
-            // default: {}, rules: [], currentState: []
-            rules: []
+            rules: [],
+            COMPONENTS: sQuery.getComponents.bind({...config})(element),
+            SUB_COMPONENTS: sQuery.getSubComponents.bind({...config})(element)
         }
-
-        element.polymorph.COMPONENTS = sQuery.getComponents.bind({...config})(element);
-        element.polymorph.SUB_COMPONENTS = sQuery.getSubComponents.bind({...config})(element);
 
         const { COMPONENTS, SUB_COMPONENTS } = element.polymorph;
 
-        // Setup repaint() method
         element.repaint = function() {
             [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(el => {
                 if (el.polymorph) {
@@ -71,18 +63,24 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
         };
     }
 
-    element.polymorph.rules = element.polymorph.rules.concat({
-        context: context,
-        context: context,
-        styles: stylesheet
-    });
+    if (!element.polymorph.rules.some(rule => {
+        // const equalContext = stringifyState(rule.context) == stringifyState(context);
+        // const equalStyles = stringifyState(rule.styles) == stringifyState(stylesheet);
+
+        // return equalContext && equalStyles;
+    })) {
+        element.polymorph.rules = element.polymorph.rules.concat({
+            context: context,
+            styles: stylesheet
+        });
+    }
 
     if (typeof stylesheet === 'function') {
         stylesheet = stylesheet(element);
     }
 
     Object.entries(stylesheet).forEach(([key, value]) => {
-        const COMPONENTS = sQuery.getComponents.bind({...config})(element, key);
+        let COMPONENTS = sQuery.getComponents.bind({...config})(element, key);
         let SUB_COMPONENTS = sQuery.getSubComponents.bind({...config})(element, key);
 
         //Handle case where desired element for styles to be applied is manually controlled
@@ -98,6 +96,14 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
 
         // Smart handle `components`
         if (COMPONENTS.length) {
+            if (value.disableCascade) {
+                COMPONENTS = COMPONENTS.filter(component => {
+                    return COMPONENTS.every(_component => {
+                        return component.contains(_component);
+                    });
+                });
+            }
+
             return COMPONENTS.forEach(component => {
                 return handleStyleSheet(component, value, config, context);
             });
@@ -107,21 +113,20 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
         if (SUB_COMPONENTS.length) {
             if (value.disableCascade) {
                 SUB_COMPONENTS = SUB_COMPONENTS.filter(subComponent => {
-                    const componentName = [...element.classList].reduce((accumulator, currentValue) => {
+                    const componentName = [...element.classList].reduce(($, currentValue) => {
                         if (currentValue.indexOf(config.componentGlue) > 1) {
-                            currentValue = currentValue.substring(currentValue.lastIndexOf(config.componentGlue) + 1, currentValue.length);
+                            const glueLength = config.componentGlue.length;
+                            const nameStart = currentValue.lastIndexOf(config.componentGlue) + glueLength;
 
-                            return currentValue.substring(1, currentValue.indexOf(config.modifierGlue));
+                            currentValue = currentValue.substring(nameStart, currentValue.length);
+
+                            return currentValue.substring(0, currentValue.indexOf(config.modifierGlue));
                         }
                     }, []);
 
                     const parentSubComponent = sQuery.parent.bind({...config})(subComponent, componentName);
 
-                    if (parentSubComponent) {
-                        // console.log(subComponent, parentSubComponent);
-                    }
-
-                    // return element === parentSubComponent;
+                    return element === parentSubComponent;
                 });
             }
 
@@ -162,7 +167,7 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
             });
 
             element.addEventListener('mouseleave', event => {
-                delete element.polymorph.isHovered;
+                element.polymorph.isHovered = false;
 
                 element.repaint();
             });
@@ -176,10 +181,8 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
         }
     });
 
-    // Sort Array to ensure rules without context are applied first
-    element.polymorph.rules.sort((a, b) => {
-        return a.context.length - b.context.length;
-    });
+    // Sort rules to ensure rules without context are applied first
+    element.polymorph.rules.sort((a, b) => a.context.length - b.context.length);
 }
 
 /**
