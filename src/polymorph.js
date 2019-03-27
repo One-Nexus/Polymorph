@@ -55,6 +55,18 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
                             }
                             return sQuery.hasModifier.bind({...config})(ruleContext.source, ruleContext.value)
                         })) {
+                            if (rule.dependencies) {
+                                const ruleStyles = rule.styles.constructor === Array ? rule.styles[1] : rule.styles;
+
+                                if (rule.dependencies instanceof HTMLElement) {
+                                    doStyles(rule.dependencies, ruleStyles);
+                                }
+                                if (rule.dependencies instanceof NodeList) {
+                                    rule.dependencies.forEach(dependency => {
+                                        return doStyles(dependency, ruleStyles);
+                                    });
+                                }
+                            }
                             doStyles(el, rule.styles);
                         }
                     });
@@ -71,7 +83,8 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
     })) {
         element.polymorph.rules = element.polymorph.rules.concat({
             context: context,
-            styles: stylesheet
+            styles: stylesheet,
+            dependencies: stylesheet instanceof Array && stylesheet[0] && stylesheet[0]
         });
     }
 
@@ -85,13 +98,11 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
 
         //Handle case where desired element for styles to be applied is manually controlled
         if (value instanceof Array && value[0]) {
-            if (value[0] instanceof HTMLElement) {
-                return handleStyleSheet(value[0], value[1], config, context);
-            }
-    
-            if (value[0] instanceof NodeList) {
-                return value[0].forEach(node => handleStyleSheet(node, value[1], config, context));
-            }
+            element.polymorph.rules = element.polymorph.rules.concat({
+                context: context,
+                styles: value[1],
+                dependencies: value[0]
+            });
         }
 
         // Smart handle `components`
