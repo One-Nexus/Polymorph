@@ -60,7 +60,7 @@ describe('Polymorph function', () => {
                 }));
             });
     
-            it('should apply the styles to the element', () => {
+            it.skip('should apply the styles to the element', () => {
                 assert.equal(document.getElementById('SVRNE').getAttribute('style'), 'position: relative;');
             });
         });

@@ -1,5 +1,3 @@
-import stringifyState from './utilities/stringifyState';
-
 var sQuery = (typeof window !== 'undefined') && window.sQuery;
 
 // `process` and `require` are exploited to help reduce bundle size
@@ -62,11 +60,15 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
                             dependentElements.length && allDependentElements.push(...dependentElements);
                         }
                     });
+
+                    if (allDependentElements.includes(el)) {
+                        allDependentElements.filter(item => item !== el)
+                    }
                 }
             });
 
             if (!disableDependentElements && allDependentElements.length) {
-                allDependentElements = allDependentElements.filter(function(item, pos) {
+                allDependentElements = allDependentElements.filter((item, pos) => {
                     return allDependentElements.indexOf(item) == pos;
                 });
 
@@ -75,17 +77,10 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
         };
     }
 
-    if (!element.polymorph.rules.some(rule => {
-        // const equalContext = stringifyState(rule.context) === stringifyState(context);
-        // const equalStyles = stringifyState(rule.styles) == stringifyState(stylesheet);
-
-        // return equalContext && equalStyles;
-    })) {
-        element.polymorph.rules = element.polymorph.rules.concat({
-            context: context,
-            styles: stylesheet
-        });
-    }
+    element.polymorph.rules = element.polymorph.rules.concat({
+        context: context,
+        styles: stylesheet
+    });
 
     if (typeof stylesheet === 'function') {
         stylesheet = stylesheet(element);
@@ -210,11 +205,19 @@ function doStyles(el, styles) {
     }
 
     Object.entries(styles).forEach(([key, value]) => {
-        el.style[key] = value;
+        if (typeof value === 'function') {
+            return;
+        }
+
+        return el.style[key] = value;
     });
 
     const dependentElements = Object.values(styles).reduce((accumulator, currentValue) => {
         if (currentValue instanceof Array && currentValue[0]) {
+            if (currentValue[0] instanceof NodeList || currentValue[0] instanceof Array) {
+                return accumulator.concat(...currentValue[0]);
+            }
+
             return accumulator.concat(currentValue[0]);
         }
 
