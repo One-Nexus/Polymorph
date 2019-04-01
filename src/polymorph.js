@@ -45,7 +45,9 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
 
         const { COMPONENTS, SUB_COMPONENTS } = element.polymorph;
 
-        element.repaint = function() {
+        element.repaint = function(disableDependentElements) {
+            let allDependentElements = [];
+
             [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(el => {
                 if (el.polymorph) {
                     el.polymorph.rules.forEach(rule => {
@@ -55,36 +57,33 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
                             }
                             return sQuery.hasModifier.bind({...config})(ruleContext.source, ruleContext.value)
                         })) {
-                            if (rule.dependencies) {
-                                const ruleStyles = rule.styles.constructor === Array ? rule.styles[1] : rule.styles;
+                            const dependentElements = doStyles(el, rule.styles) || [];
 
-                                if (rule.dependencies instanceof HTMLElement) {
-                                    doStyles(rule.dependencies, ruleStyles);
-                                }
-                                if (rule.dependencies instanceof NodeList) {
-                                    rule.dependencies.forEach(dependency => {
-                                        return doStyles(dependency, ruleStyles);
-                                    });
-                                }
-                            }
-                            doStyles(el, rule.styles);
+                            dependentElements.length && allDependentElements.push(...dependentElements);
                         }
                     });
                 }
             });
+
+            if (!disableDependentElements && allDependentElements.length) {
+                allDependentElements = allDependentElements.filter(function(item, pos) {
+                    return allDependentElements.indexOf(item) == pos;
+                });
+
+                allDependentElements.forEach(el => el.repaint && el.repaint(true));
+            }
         };
     }
 
     if (!element.polymorph.rules.some(rule => {
-        // const equalContext = stringifyState(rule.context) == stringifyState(context);
+        // const equalContext = stringifyState(rule.context) === stringifyState(context);
         // const equalStyles = stringifyState(rule.styles) == stringifyState(stylesheet);
 
         // return equalContext && equalStyles;
     })) {
         element.polymorph.rules = element.polymorph.rules.concat({
             context: context,
-            styles: stylesheet,
-            dependencies: stylesheet instanceof Array && stylesheet[0] && stylesheet[0]
+            styles: stylesheet
         });
     }
 
@@ -98,11 +97,17 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
 
         //Handle case where desired element for styles to be applied is manually controlled
         if (value instanceof Array && value[0]) {
-            element.polymorph.rules = element.polymorph.rules.concat({
-                context: context,
-                styles: value[1],
-                dependencies: value[0]
-            });
+            if (value[0] instanceof HTMLElement) {
+                handleStyleSheet(value[0], value[1], config, context);
+            }
+
+            if (value[0] instanceof NodeList) {
+                value[0].forEach(el => {
+                    return handleStyleSheet(el, value[1], config, context);
+                });
+            }
+
+            return;
         }
 
         // Smart handle `components`
@@ -200,9 +205,23 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
  * 
  */
 function doStyles(el, styles) {
-    Object.entries(typeof styles === 'function' ? styles(el) : styles).forEach(([key, value]) => {
+    if (typeof styles === 'function') {
+        styles = styles(el);
+    }
+
+    Object.entries(styles).forEach(([key, value]) => {
         el.style[key] = value;
     });
+
+    const dependentElements = Object.values(styles).reduce((accumulator, currentValue) => {
+        if (currentValue instanceof Array && currentValue[0]) {
+            return accumulator.concat(currentValue[0]);
+        }
+
+        return accumulator;
+    }, []);
+
+    return dependentElements;
 }
 
 /**
