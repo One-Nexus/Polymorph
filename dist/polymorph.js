@@ -91,7 +91,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 6);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -99,17 +99,14 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return getModuleNamespace; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return getNamespace; });
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-/**
- * Get the Module name from a Synergy query
- * 
- * @param {*} query 
- * @param {Bool} strict
- */
-function getModuleNamespace(query, componentGlue, modifierGlue) {
-  var strict = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+function getNamespace(query, strict, config) {
+  config = config || this;
+  var _config = config,
+      modifierGlue = _config.modifierGlue,
+      componentGlue = _config.componentGlue;
 
   if (query instanceof HTMLElement) {
     if (query.hasAttribute('data-module')) {
@@ -118,10 +115,10 @@ function getModuleNamespace(query, componentGlue, modifierGlue) {
 
     if (query.classList.length) {
       if (strict) {
-        return query.classList[0].split(modifierGlue)[0].split(componentGlue)[0];
+        return query.classList[0].split(modifierGlue)[0];
       }
 
-      return query.classList[0].split(modifierGlue)[0];
+      return query.classList[0].split(modifierGlue)[0].split(componentGlue)[0];
     }
   }
 
@@ -129,7 +126,7 @@ function getModuleNamespace(query, componentGlue, modifierGlue) {
     return query;
   }
 
-  if (_typeof(query) === 'object' && 'name' in query) {
+  if (query && _typeof(query) === 'object' && query.name) {
     return query.name;
   }
 
@@ -143,17 +140,75 @@ function getModuleNamespace(query, componentGlue, modifierGlue) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return isValidSelector; });
-/**
- * Test the validity (not existance) of a CSS selector
- * 
- * @param {String} selector - the selector to test for validity
- * 
- * @returns {Bool}
- * 
- * @example isValidSelector('[data-foo-bar]') // returns true
- * @example isValidSelector(4) // returns false
- */
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return parent; });
+/* harmony import */ var _getNamespace__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(0);
+
+function parent(node, query, config) {
+  config = config || this;
+
+  if (node instanceof NodeList) {
+    return [].slice.call(node).map(function (node) {
+      return parent(node, query, config);
+    });
+  }
+
+  var _config = config,
+      componentGlue = _config.componentGlue,
+      modifierGlue = _config.modifierGlue;
+  var namespace = config.namespace || Object(_getNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(node, false, config);
+  var $query = query || namespace;
+
+  if ($query !== namespace) {
+    $query = namespace + componentGlue + $query;
+  }
+
+  var parentComponent = $query && node.closest(".".concat($query, ", [class*='").concat($query + modifierGlue, "']"));
+
+  if (parentComponent) {
+    return parentComponent;
+  }
+
+  namespace = config.namespace || Object(_getNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(node, true, config);
+
+  if (namespace && namespace.indexOf(query > -1)) {
+    $query = namespace.substring(0, namespace.indexOf(query) + query.length);
+  }
+
+  var parentSubComponent = $query && node.closest(".".concat($query, ", [class*='").concat($query + modifierGlue, "']"));
+
+  if (parentSubComponent) {
+    return parentSubComponent;
+  }
+}
+
+/***/ }),
+/* 2 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+
+// EXTERNAL MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/refactor/api/getNamespace.js
+var getNamespace = __webpack_require__(0);
+
+// EXTERNAL MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/refactor/api/parent.js
+var api_parent = __webpack_require__(1);
+
+// CONCATENATED MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/refactor/utilities/filterElements.js
+
+
+function filterElements(node, elements, config) {
+  var namespace = config.namespace || Object(getNamespace["a" /* default */])(node, false, config);
+  var sourceParent = Object(api_parent["default"])(node, namespace, config);
+  if (!sourceParent) return elements;
+  elements = [].slice.call(elements).filter(function (element) {
+    var targetParent = Object(api_parent["default"])(element, namespace, config);
+    return targetParent === sourceParent;
+  });
+  return elements;
+}
+// CONCATENATED MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/refactor/utilities/isValidSelector.js
 function isValidSelector(selector) {
   if (!selector || typeof selector !== 'string') return false;
   var stub = document.createElement('br');
@@ -167,104 +222,71 @@ function isValidSelector(selector) {
 
   return true;
 }
-
-/***/ }),
-/* 2 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return parent; });
-/* harmony import */ var _utilities_getModuleNamespace__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(0);
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
-
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+// CONCATENATED MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/refactor/api/getComponents.js
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return getComponents; });
 
 
-/**
- * @param {(String|'module'|'component')} query 
- */
 
-function parent(query, namespace) {
-  var _this = this;
+function getComponents(node, componentName, config) {
+  config = config || this;
+  if (componentName && !isValidSelector(componentName)) return [];
 
-  if (query === 'module') {
-    return _toConsumableArray(this.DOMNodes).map(function (node) {
-      return node.parentNode.closest('[data-module]');
-    });
+  if (node instanceof NodeList) {
+    return [].slice.call(node).reduce(function (matches, node) {
+      return matches.concat([].slice.call(getComponents(node, componentName, config)));
+    }, []);
   }
 
-  if (query === 'component') {
-    return _toConsumableArray(this.DOMNodes).map(function (node) {
-      return node.parentNode.closest('[data-component]');
-    });
+  var _config = config,
+      subComponent = _config.subComponent,
+      modifierGlue = _config.modifierGlue,
+      componentGlue = _config.componentGlue;
+  var namespace = config.namespace || Object(getNamespace["a" /* default */])(node, subComponent, config);
+  var components;
+
+  if (!componentName) {
+    components = node.querySelectorAll("[class*='".concat(namespace + componentGlue, "']"));
+  } else {
+    var query = namespace + componentGlue + componentName;
+    components = node.querySelectorAll(".".concat(query, ", [class*='").concat(query + modifierGlue, "']"));
   }
 
-  if (query && typeof query === 'string') {
-    var moduleMatch = function moduleMatch() {
-      var nodes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _this.DOMNodes;
-      var parentModule;
+  components = [].slice.call(components).filter(function (element) {
+    var sourceNamespace = Object(getNamespace["a" /* default */])(node, true, config);
+    var targetNamespace = Object(getNamespace["a" /* default */])(element, true, config);
+    var sourceDepth = (sourceNamespace.match(new RegExp(componentGlue, 'g')) || []).length;
+    var targetDepth = (targetNamespace.match(new RegExp(componentGlue, 'g')) || []).length; // Special condition: if no componentName passed and we want sub-components,
+    // find ALL child sub-components, as parent modules cannot have direct
+    // descendant sub-components
 
-      if (nodes instanceof NodeList) {
-        return _toConsumableArray(nodes).map(function (node) {
-          return moduleMatch(node);
-        });
-      }
-
-      parentModule = nodes.parentNode.closest("[data-module=\"".concat(query, "\"]"));
-
-      if (parentModule) {
-        return parentModule;
-      }
-
-      parentModule = nodes.closest(".".concat(query, ", [class*=\"").concat(query + _this.modifierGlue, "\"]"));
-
-      if (parentModule && Object(_utilities_getModuleNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(parentModule, _this.componentGlue, _this.modifierGlue, 'strict') === query) {
-        return parentModule;
-      }
-    };
-
-    var componentMatch = function componentMatch() {
-      var nodes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _this.DOMNodes;
-      namespace = namespace || Object(_utilities_getModuleNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(nodes, _this.componentGlue, _this.modifierGlue, 'strict');
-      var parentModule, selector;
-
-      if (nodes instanceof NodeList) {
-        return _toConsumableArray(nodes).map(function (node) {
-          return componentMatch(node);
-        });
-      }
-
-      parentModule = nodes.parentNode.closest("[data-component=\"".concat(query, "\"]"));
-
-      if (parentModule) {
-        return parentModule;
-      }
-
-      parentModule = nodes.parentNode.closest(".".concat(namespace + _this.componentGlue + query));
-
-      if (parentModule) {
-        return parentModule;
-      }
-
-      selector = "[class*=\"".concat(namespace + _this.componentGlue, "\"][class*=\"").concat(_this.componentGlue + query, "\"]");
-      parentModule = nodes.parentNode.closest(selector);
-
-      if (parentModule) {
-        return parentModule;
-      }
-    };
-
-    if (this.DOMNodes instanceof HTMLElement) {
-      return moduleMatch() || componentMatch();
+    if (subComponent && !componentName) {
+      return true;
     }
 
-    return moduleMatch()[0] ? moduleMatch() : componentMatch();
-  }
+    if (subComponent && !sourceDepth) {
+      return false;
+    }
+
+    if (subComponent || !sourceDepth) {
+      sourceDepth++;
+    }
+
+    var modifierCriteria = true;
+
+    if (config.modifier) {
+      modifierCriteria = [].slice.call(element.classList).filter(function (className) {
+        return className.indexOf(namespace) === 0;
+      })[0].indexOf(config.modifier) > -1;
+    }
+
+    if (!subComponent && sourceDepth > 1) {
+      return modifierCriteria;
+    }
+
+    return modifierCriteria && targetDepth === sourceDepth;
+  });
+  components = filterElements(node, components, config);
+  return components;
 }
 
 /***/ }),
@@ -273,65 +295,323 @@ function parent(query, namespace) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return getComponents; });
-/* harmony import */ var _utilities_getModuleNamespace__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(0);
-/* harmony import */ var _utilities_isValidSelector__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(1);
-/* harmony import */ var _parent__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(2);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return polymorph; });
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
 
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
 
+function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var sQuery = typeof window !== 'undefined' && window.sQuery; // `process` and `require` are exploited to help reduce bundle size
+
+if (!sQuery || typeof process !== 'undefined' && !process.env.SYNERGY) {
+  sQuery = {
+    getComponents: __webpack_require__(2).default,
+    getSubComponents: __webpack_require__(4).default,
+    hasModifier: __webpack_require__(5).default,
+    parent: __webpack_require__(1).default
+  };
+}
+
+function polymorph(element, styles) {
+  var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  var globals = arguments.length > 3 ? arguments[3] : undefined;
+  var Synergy = window.Synergy || {};
+  var modifierGlue = config.modifierGlue || Synergy.modifierGlue || '-';
+  var componentGlue = config.componentGlue || Synergy.componentGlue || '_';
+  var CONFIG = {
+    componentGlue: componentGlue,
+    modifierGlue: modifierGlue
+  };
+  var STYLESHEET = typeof styles === 'function' ? styles(element, config, globals) : styles;
+
+  if (STYLESHEET.constructor === Array) {
+    if (STYLESHEET.every(function (value) {
+      return value && value.constructor === Object;
+    })) {
+      STYLESHEET.forEach(function (value) {
+        return handleStyleSheet(element, value, CONFIG);
+      });
+    }
+  } else {
+    handleStyleSheet(element, STYLESHEET, CONFIG);
+  }
+
+  element.repaint();
+}
 /**
- * @param {*} componentName 
+ * 
  */
 
-function getComponents() {
-  var _this = this;
+function handleStyleSheet(element, stylesheet, config) {
+  var context = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+  var WRAPPER_ELEMENT = [].slice.call(element.parentNode.classList).some(function (className) {
+    return className.indexOf('group') === 0 || className.indexOf('wrapper') === 0;
+  }) && element.parentNode;
 
-  var componentName = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-  var modifier = arguments.length > 1 ? arguments[1] : undefined;
-  var namespace = arguments.length > 2 ? arguments[2] : undefined;
-  if (componentName && !Object(_utilities_isValidSelector__WEBPACK_IMPORTED_MODULE_1__[/* default */ "a"])(componentName)) return [];
+  if (!element.polymorph) {
+    element.polymorph = {
+      rules: [],
+      COMPONENTS: sQuery.getComponents.bind(_objectSpread({}, config))(element),
+      SUB_COMPONENTS: sQuery.getSubComponents.bind(_objectSpread({}, config))(element)
+    };
+    var _element$polymorph = element.polymorph,
+        COMPONENTS = _element$polymorph.COMPONENTS,
+        SUB_COMPONENTS = _element$polymorph.SUB_COMPONENTS;
 
-  if (this.DOMNodes instanceof NodeList) {
-    return Array.prototype.slice.call(this.DOMNodes).reduce(function (matches, node) {
-      return matches.concat(Array.prototype.slice.call(getComponents.bind(Object.assign(_this, {
-        DOMNodes: node
-      }))(componentName, modifier, namespace)));
-    }, []);
+    element.repaint = function (disableDependentElements) {
+      var allDependentElements = [];
+
+      if (WRAPPER_ELEMENT) {
+        WRAPPER_ELEMENT.repaint(true);
+      }
+
+      [element].concat(_toConsumableArray(COMPONENTS), _toConsumableArray(SUB_COMPONENTS)).forEach(function (el) {
+        if (el.polymorph) {
+          el.polymorph.rules.forEach(function (rule) {
+            if (rule.context.every(function (ruleContext) {
+              if (ruleContext.value === 'hover') {
+                return ruleContext.source.polymorph.isHovered;
+              }
+
+              if (ruleContext.value === 'focus') {
+                return ruleContext.source.polymorph.isFocused;
+              }
+
+              return sQuery.hasModifier.bind(_objectSpread({}, config))(ruleContext.source, ruleContext.value);
+            })) {
+              var _allDependentElements;
+
+              var dependentElements = doStyles(el, rule.styles) || [];
+              dependentElements.length && (_allDependentElements = allDependentElements).push.apply(_allDependentElements, _toConsumableArray(dependentElements));
+            }
+          });
+
+          if (allDependentElements.includes(el)) {
+            allDependentElements.filter(function (item) {
+              return item !== el;
+            });
+          }
+        }
+      });
+
+      if (!disableDependentElements && allDependentElements.length) {
+        allDependentElements = allDependentElements.filter(function (item, pos) {
+          return allDependentElements.indexOf(item) == pos;
+        });
+        allDependentElements.forEach(function (el) {
+          return el.repaint && el.repaint(true);
+        });
+      }
+    };
   }
 
-  if (componentName.indexOf('modifier(') === 0) return;
-  namespace = namespace || this.namespace || Object(_utilities_getModuleNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(this.DOMNodes, this.componentGlue, this.modifierGlue, 'strict');
-  var query = namespace + (componentName ? this.componentGlue + componentName : '');
-  var selector = ".".concat(query, ", [class*=\"").concat(query + this.modifierGlue, "\"]");
+  element.polymorph.rules = element.polymorph.rules.concat({
+    context: context,
+    styles: stylesheet
+  });
 
-  if (!componentName) {
-    selector = "[class*=\"".concat(query + this.componentGlue, "\"]");
+  if (typeof stylesheet === 'function') {
+    stylesheet = stylesheet(element);
   }
 
-  var subComponents = Array.prototype.slice.call(this.DOMNodes.querySelectorAll(selector)).filter(function (component) {
-    var parentModule = _parent__WEBPACK_IMPORTED_MODULE_2__["default"].bind(Object.assign(_this, {
-      DOMNodes: component
-    }))(namespace);
-    var parentElementIsModule = _this.parentElement ? _this.parentElement.matches(".".concat(namespace, ", [class*=\"").concat(namespace, "-\"]")) : false;
+  Object.entries(stylesheet).forEach(function (_ref) {
+    var _ref2 = _slicedToArray(_ref, 2),
+        key = _ref2[0],
+        value = _ref2[1];
 
-    if (parentElementIsModule && _this.parentElement !== parentModule) {
-      return false;
+    var COMPONENTS = sQuery.getComponents.bind(_objectSpread({}, config))(element, key);
+    var SUB_COMPONENTS = sQuery.getSubComponents.bind(_objectSpread({}, config))(element, key); //Handle case where desired element for styles to be applied is manually controlled
+
+    if (value instanceof Array && value[0]) {
+      if (value[0] instanceof HTMLElement) {
+        handleStyleSheet(value[0], value[1], config, context);
+      }
+
+      if (value[0] instanceof NodeList) {
+        value[0].forEach(function (el) {
+          return handleStyleSheet(el, value[1], config, context);
+        });
+      }
+
+      return;
+    } // Smart handle `components`
+
+
+    if (COMPONENTS.length) {
+      if (value.disableCascade) {
+        COMPONENTS = COMPONENTS.filter(function (component) {
+          return COMPONENTS.every(function (_component) {
+            return component.contains(_component);
+          });
+        });
+      }
+
+      return COMPONENTS.forEach(function (component) {
+        return handleStyleSheet(component, value, config, context);
+      });
+    } // Smart handle `sub-components`
+
+
+    if (SUB_COMPONENTS.length) {
+      if (value.disableCascade) {
+        SUB_COMPONENTS = SUB_COMPONENTS.filter(function (subComponent) {
+          var componentName = _toConsumableArray(element.classList).reduce(function ($, currentValue) {
+            if (currentValue.indexOf(config.componentGlue) > 1) {
+              var glueLength = config.componentGlue.length;
+              var nameStart = currentValue.lastIndexOf(config.componentGlue) + glueLength;
+              currentValue = currentValue.substring(nameStart, currentValue.length);
+              return currentValue.substring(0, currentValue.indexOf(config.modifierGlue));
+            }
+          }, []);
+
+          var parentSubComponent = sQuery.parent.bind(_objectSpread({}, config))(subComponent, componentName);
+          return element === parentSubComponent;
+        });
+      }
+
+      return SUB_COMPONENTS.forEach(function (component) {
+        return handleStyleSheet(component, value, config, context);
+      });
+    } // Handle `sub-components`
+
+
+    if (key.indexOf('subComponent(') > -1) {
+      var subComponent = key.replace('subComponent(', '').replace(/\)/g, '');
+      var subComponents = sQuery.getSubComponents.bind(_objectSpread({}, config))(element, subComponent);
+      return subComponents.forEach(function (component) {
+        return handleStyleSheet(component, value, config, context);
+      });
+    } // Handle `modifiers`
+
+
+    if (key.indexOf('modifier(') > -1) {
+      var modifier = key.replace('modifier(', '').replace(/\)/g, '');
+      return handleStyleSheet(element, value, config, context.concat({
+        source: element,
+        value: modifier
+      }));
+    } // Handle `hover` interaction
+
+
+    if (key === ':hover') {
+      handleStyleSheet(element, value, config, context.concat({
+        source: element,
+        value: 'hover'
+      }));
+      element.addEventListener('mouseenter', function (event) {
+        element.polymorph.isHovered = true;
+        element.repaint();
+      });
+      element.addEventListener('mouseleave', function (event) {
+        element.polymorph.isHovered = false;
+        element.repaint();
+      });
+      return;
+    } // Handle `focus` interaction
+
+
+    if (key === ':focus') {
+      handleStyleSheet(element, value, config, context.concat({
+        source: element,
+        value: 'focus'
+      }));
+      element.addEventListener('focus', function (event) {
+        element.polymorph.isFocused = true;
+        element.repaint();
+      });
+      element.addEventListener('blur', function (event) {
+        element.polymorph.isFocused = false;
+        element.repaint();
+      });
+      return;
+    } // Handle Group/Wrapper elements
+
+
+    if (key === 'group' || key === 'wrapper') {
+      var wrapper = element.parentNode;
+      wrapper.classList.forEach(function (className) {
+        if (className.indexOf('group') === 0 || className.indexOf('wrapper') === 0) {
+          handleStyleSheet(wrapper, value, config, context);
+        }
+      });
+      return;
+    }
+  }); // Sort rules to ensure rules without context are applied first
+
+  element.polymorph.rules.sort(function (a, b) {
+    return a.context.length - b.context.length;
+  });
+}
+/**
+ * 
+ */
+
+
+function doStyles(el, styles) {
+  if (typeof styles === 'function') {
+    styles = styles(el);
+  }
+
+  Object.entries(styles).forEach(function (_ref3) {
+    var _ref4 = _slicedToArray(_ref3, 2),
+        key = _ref4[0],
+        value = _ref4[1];
+
+    if (typeof value === 'function') {
+      return;
     }
 
-    return Array.prototype.slice.call(component.classList).some(function (className) {
-      var isComponent = className.split(_this.componentGlue).length - 1 === 1;
-      var isQueryMatch = className.indexOf(query) === 0;
-
-      if (modifier) {
-        return isQueryMatch && isComponent && className.indexOf(modifier) > -1;
-      } else {
-        return isQueryMatch && isComponent;
+    return el.style[key] = value;
+  });
+  var dependentElements = Object.values(styles).reduce(function (accumulator, currentValue) {
+    if (currentValue instanceof Array && currentValue[0]) {
+      if (currentValue[0] instanceof NodeList || currentValue[0] instanceof Array) {
+        return accumulator.concat.apply(accumulator, _toConsumableArray(currentValue[0]));
       }
-    });
-  }); // console.log(subComponents)
 
-  return subComponents;
+      return accumulator.concat(currentValue[0]);
+    }
+
+    return accumulator;
+  }, []);
+  return dependentElements;
+}
+/**
+ * Wrapper for sQuery `hasModifier()`
+ */
+
+
+polymorph.modifier = function (element, modifier, modifierGlue, componentGlue) {
+  var Synergy = window.Synergy || {};
+  modifierGlue = modifierGlue || Synergy.modifierGlue || '-';
+  componentGlue = componentGlue || Synergy.componentGlue || '_';
+  return sQuery.hasModifier.bind({
+    modifierGlue: modifierGlue,
+    componentGlue: componentGlue
+  })(element, modifier);
+};
+/**
+ * Attach to Window
+ */
+
+
+if (typeof window !== 'undefined') {
+  window.polymorph = polymorph;
 }
 
 /***/ }),
@@ -341,62 +621,12 @@ function getComponents() {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return getSubComponents; });
-/* harmony import */ var _utilities_getModuleNamespace__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(0);
-/* harmony import */ var _utilities_isValidSelector__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(1);
+/* harmony import */ var _getComponents__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
 
-
-/**
- * @param {*} subComponentName 
- */
-
-function getSubComponents(subComponentName) {
-  var _this = this;
-
-  var context = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-  var modifier = arguments.length > 2 ? arguments[2] : undefined;
-  if (subComponentName && !Object(_utilities_isValidSelector__WEBPACK_IMPORTED_MODULE_1__[/* default */ "a"])(subComponentName)) return [];
-
-  if (this.DOMNodes instanceof NodeList) {
-    return Array.prototype.slice.call(this.DOMNodes).reduce(function (matches, DOMNodes) {
-      return matches.concat(Array.prototype.slice.call(getSubComponents.bind(Object.assign(_this, {
-        DOMNodes: DOMNodes
-      }))(subComponentName, context, modifier)));
-    }, []);
-  }
-
-  var namespace = this.namespace || Object(_utilities_getModuleNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(this.DOMNodes, this.componentGlue, this.modifierGlue) || '';
-  var depth = namespace.split(this.componentGlue).length - 1;
-
-  if (context.length) {
-    namespace = [namespace].concat(context, [subComponentName]).join(this.componentGlue);
-  } else if (subComponentName) {
-    namespace = namespace + this.componentGlue + subComponentName;
-  }
-
-  var selector = ".".concat(namespace, ", [class*=\"").concat(namespace + this.modifierGlue, "\"]");
-
-  if (!subComponentName) {
-    selector = "[class*=\"".concat(namespace + this.componentGlue, "\"]");
-  }
-
-  return Array.prototype.slice.call(this.DOMNodes.querySelectorAll(selector)).filter(function (subComponent) {
-    return Array.prototype.slice.call(subComponent.classList).some(function (className) {
-      if ((className.match(new RegExp(_this.componentGlue, 'g')) || []).length < 2) {
-        return false;
-      }
-
-      var namespaceMatch;
-
-      if (modifier) {
-        namespaceMatch = className.indexOf(namespace) === 0 && className.indexOf(modifier) > -1;
-      } else {
-        namespaceMatch = className.indexOf(namespace) === 0;
-      }
-
-      var depthMatch = className.split(_this.componentGlue).length - 1 === (context.length ? depth : depth + 1);
-      return depth ? namespaceMatch && depthMatch : namespaceMatch;
-    });
-  });
+function getSubComponents(node, subComponentName, config) {
+  config = config || this;
+  config.subComponent = true;
+  return Object(_getComponents__WEBPACK_IMPORTED_MODULE_0__["default"])(node, subComponentName, config);
 }
 
 /***/ }),
@@ -406,556 +636,34 @@ function getSubComponents(subComponentName) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return hasModifier; });
-/* harmony import */ var _utilities_getModuleNamespace__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(0);
+/* harmony import */ var _getNamespace__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(0);
 
-/**
- * @param {*} modifier 
- */
+function hasModifier(node, modifier, config) {
+  config = config || this;
+  if (!modifier) return;
 
-function hasModifier(modifier) {
-  var _this = this;
-
-  if (modifier) {
-    if (modifier.constructor === Array) {
-      return modifier.every(function (_modifier) {
-        return hasModifier.bind(_this)(_modifier);
-      });
-    }
-
-    if (this.DOMNodes instanceof NodeList) {
-      return Array.prototype.slice.call(this.DOMNodes).every(function (DOMNodes) {
-        return hasModifier.bind(Object.assign(_this, {
-          DOMNodes: DOMNodes
-        }))(modifier);
-      });
-    }
-
-    var node = this.DOMNodes;
-    return Array.prototype.slice.call(node.classList).some(function (className) {
-      var namespace = _this.namespace || node.namespace || Object(_utilities_getModuleNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(node, _this.modifierGlue, _this.componentGlue);
-      var matchIndex = className.indexOf(_this.modifierGlue + modifier);
-      var namespaceMatch = className.indexOf(namespace) === 0;
-      var isModifierTest1 = className.indexOf(_this.modifierGlue + modifier + _this.modifierGlue) > -1;
-      var isModifierTest2 = matchIndex > -1 && matchIndex === className.length - modifier.length - _this.modifierGlue.length;
-      return namespaceMatch && (isModifierTest1 || isModifierTest2);
+  if (modifier.constructor === Array) {
+    return modifier.every(function (modifier) {
+      return hasModifier(node, modifier, config);
     });
   }
-}
 
-/***/ }),
-/* 6 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+  if (node instanceof NodeList) {
+    return [].slice.call(node).every(function (node) {
+      return hasModifier(node, modifier, config);
+    });
+  }
 
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-
-// CONCATENATED MODULE: ./src/utilities/isValidCssProperty.js
-/**
- * Determine if a string is a valid CSS property
- * 
- * @param {String} query
- */
-function isValidCssProperty(query) {
-  var el = document.createElement('div');
-  el.style[query] = 'initial';
-  return !!el.style.cssText;
-}
-// CONCATENATED MODULE: ./src/utilities/stringifyState.js
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-/**
- * Stringify a polymorph state
- * 
- * @see https://stackoverflow.com/a/48254637/2253888
- * 
- * @param {Object} state 
- */
-/* harmony default export */ var stringifyState = (function (state) {
-  var cache = new Set();
-  return JSON.stringify(state, function (key, value) {
-    // Do not attempt to serialize DOM elements as the bloat causes browser to crash
-    if (value instanceof HTMLElement) {
-      value = '[HTMLElement]';
-    }
-
-    if (_typeof(value) === 'object' && value !== null) {
-      if (cache.has(value)) {
-        // Circular reference found
-        try {
-          // If this value does not reference a parent it can be deduped
-          return JSON.parse(JSON.stringify(value));
-        } catch (err) {
-          // discard key if value cannot be deduped
-          return;
-        }
-      } // Store value in our set
-
-
-      cache.add(value);
-    }
-
-    return value;
+  var _config = config,
+      modifierGlue = _config.modifierGlue;
+  return [].slice.call(node.classList).some(function (className) {
+    var namespace = config.namespace || node.namespace || Object(_getNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(node, false, config);
+    var matchIndex = className.indexOf(modifierGlue + modifier);
+    var namespaceMatch = className.indexOf(namespace) === 0;
+    var isModifierTest1 = className.indexOf(modifierGlue + modifier + modifierGlue) > -1;
+    var isModifierTest2 = matchIndex > -1 && matchIndex === className.length - modifier.length - modifierGlue.length;
+    return namespaceMatch && (isModifierTest1 || isModifierTest2);
   });
-});
-;
-// CONCATENATED MODULE: ./src/polymorph.js
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return polymorph; });
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
-
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
-
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
-
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
-
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-
-function polymorph_typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { polymorph_typeof = function _typeof(obj) { return typeof obj; }; } else { polymorph_typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return polymorph_typeof(obj); }
-
-
-
-var sQuery = typeof window !== 'undefined' && window.sQuery; // `process` and `require` are exploited to help reduce bundle size
-
-if (!sQuery || typeof process !== 'undefined' && !process.env.SYNERGY) {
-  sQuery = {
-    getComponents: __webpack_require__(3).default,
-    getSubComponents: __webpack_require__(4).default,
-    hasModifier: __webpack_require__(5).default,
-    parent: __webpack_require__(2).default
-  };
-}
-/**
- * Set a module's styles on a DOM element instance
- */
-
-
-function polymorph(element) {
-  var styles = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-  var globals = arguments.length > 3 ? arguments[3] : undefined;
-  var parentElement = arguments.length > 4 ? arguments[4] : undefined;
-  var specificity = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
-  var Synergy = window.Synergy || {};
-  var modifierGlue = config.modifierGlue || Synergy.modifierGlue || '-';
-  var componentGlue = config.componentGlue || Synergy.componentGlue || '_';
-  var values = polymorph_typeof(styles) === 'object' ? styles : styles(element, config, globals);
-  /**
-   * Setup `repaint` method on parent element
-   */
-
-  if (!parentElement && !element.repaint) {
-    element.repaint = function (custom) {
-      /**
-       * Merge default + custom options
-       */
-      var options = Object.assign({
-        clean: false
-      }, custom);
-      /**
-       * Get child components
-       */
-
-      var components = sQuery.getComponents.bind({
-        DOMNodes: element,
-        componentGlue: componentGlue,
-        modifierGlue: modifierGlue,
-        parentElement: element
-      })();
-      /**
-       * Get child sub-components
-       */
-
-      var subComponents = sQuery.getSubComponents.bind({
-        DOMNodes: element,
-        componentGlue: componentGlue,
-        modifierGlue: modifierGlue,
-        parentElement: element
-      })();
-      /**
-       * Remove styles that were not added by polymorph
-       */
-
-      if (options.clean) {
-        element.style.cssText = null;
-        components.forEach(function (component) {
-          return component.style.cssText = null;
-        });
-      }
-      /**
-       * Clean parent element/module
-       */
-
-
-      element.data && Object.keys(element.data.properties).forEach(function (property) {
-        element.style[property] = null;
-      });
-      element.data.properties = {};
-      /**
-       * Clean child components
-       */
-
-      components.forEach(function (component) {
-        component.data && Object.keys(component.data.properties).forEach(function (property) {
-          component.style[property] = null;
-        });
-        component.data = null;
-      });
-      /**
-       * Clean child sub-components
-       */
-
-      subComponents.forEach(function (component) {
-        component.data && Object.keys(component.data.properties).forEach(function (property) {
-          component.style[property] = null;
-        });
-        component.data = null;
-      });
-      /**
-       * Repaint the module
-       */
-
-      polymorph(element, styles, config, globals);
-
-      if (element.repaint.states.length) {
-        element.repaint.states.forEach(function (style) {
-          return style();
-        });
-      }
-
-      element.dispatchEvent(new Event('moduledidrepaint'));
-    };
-
-    element.repaint.states = [];
-  }
-  /**
-   * Handle array of top-level rule sets/stylesheets
-   */
-
-
-  if (styles.constructor === Array) {
-    return styles.forEach(function (stylesheet) {
-      return polymorph(element, stylesheet, config, globals, parentElement, specificity);
-    });
-  }
-  /**
-   * Handle array of object values for cascading effect
-   */
-
-
-  if (values.constructor === Array) {
-    if (values.every(function (value) {
-      return value.constructor == Object;
-    })) {
-      values.forEach(function (value) {
-        return polymorph(element, value, false, globals);
-      });
-    }
-  }
-  /**
-   * Initialise data interface
-   */
-
-
-  element.data = element.data || {
-    states: [],
-    properties: {}
-  };
-  /**
-   * Determine the parent element/module
-   */
-
-  parentElement = parentElement || element;
-  /**
-   * Loop through rule set
-   */
-
-  var _arr = Object.entries(values);
-
-  var _loop = function _loop() {
-    var _arr$_i = _slicedToArray(_arr[_i], 2),
-        key = _arr$_i[0],
-        value = _arr$_i[1];
-
-    var matchedComponents = sQuery.getComponents.bind({
-      DOMNodes: element,
-      componentGlue: componentGlue,
-      modifierGlue: modifierGlue,
-      parentElement: parentElement
-    })(key);
-    var matchedSubComponents = sQuery.getSubComponents.bind({
-      DOMNodes: element,
-      componentGlue: componentGlue,
-      modifierGlue: modifierGlue,
-      parentElement: parentElement
-    })(key);
-    /**
-     * Handle object of CSS properties / function that will return an object
-     * of CSS properties
-     */
-
-    if (typeof value === 'function' || polymorph_typeof(value) === 'object') {
-      /**
-       * Handle case where desired element for styles to be applied needs to be
-       * manually controlled
-       */
-      if (value instanceof Array) {
-        if (value[0] instanceof HTMLElement) {
-          polymorph(value[0], value[1], false, globals, parentElement, specificity);
-        }
-
-        if (value[0] instanceof NodeList) {
-          value[0].forEach(function (node) {
-            return polymorph(node, value[1], false, globals, parentElement, specificity);
-          });
-        }
-      }
-      /**
-       * Handle `modifiers`
-       */
-      else if (key.indexOf('modifier(') > -1) {
-          var modifier = key.replace('modifier(', '').replace(/\)/g, '');
-
-          if (sQuery.hasModifier.bind({
-            DOMNodes: element,
-            componentGlue: componentGlue,
-            modifierGlue: modifierGlue
-          })(modifier)) {
-            specificity++;
-            polymorph(element, value, false, globals, parentElement, specificity);
-          }
-        }
-        /**
-         * Smart handle `components`
-         */
-        else if (matchedComponents.length) {
-            matchedComponents.forEach(function (_component) {
-              if (polymorph_typeof(value) === 'object') {
-                polymorph(_component, value, false, globals, parentElement);
-              } else if (typeof value === 'function') {
-                polymorph(_component, value(_component), false, globals, parentElement);
-              }
-            });
-          }
-          /**
-           * Handle `sub-components`
-           */
-          else if (key.indexOf('subComponent(') > -1) {
-              var subComponent = key.replace('subComponent(', '').replace(/\)/g, '');
-              var subComponents = sQuery.getSubComponents.bind({
-                DOMNodes: element,
-                componentGlue: componentGlue,
-                modifierGlue: modifierGlue,
-                parentElement: parentElement
-              })(subComponent);
-
-              if (subComponents.length) {
-                subComponents.forEach(function (_component) {
-                  if (polymorph_typeof(value) === 'object') {
-                    polymorph(_component, value, false, globals, parentElement);
-                  } else if (typeof value === 'function') {
-                    polymorph(_component, value(_component), false, globals, parentElement);
-                  }
-                });
-              }
-
-              return {
-                v: void 0
-              };
-            }
-            /**
-             * Smart handle `sub-components`
-             */
-            else if (matchedSubComponents.length) {
-                if (value.disableCascade) {
-                  matchedSubComponents = matchedSubComponents.filter(function (subComponent) {
-                    if (!element.getAttribute('data-component')) {
-                      console.warn("".concat(element, " does not have data-component attribute so disableCascade option in ").concat(value, " may not reliably work"));
-                    }
-
-                    var componentName = element.getAttribute('data-component') || _toConsumableArray(element.classList).reduce(function (accumulator, currentValue) {
-                      if (currentValue.indexOf(componentGlue) > 1) {
-                        currentValue = currentValue.substring(currentValue.lastIndexOf(componentGlue) + 1, currentValue.length);
-                        return currentValue.substring(0, currentValue.indexOf(modifierGlue));
-                      }
-                    }, []);
-
-                    var parentSubComponent = sQuery.parent.bind({
-                      DOMNodes: subComponent,
-                      modifierGlue: modifierGlue,
-                      componentGlue: componentGlue
-                    })(componentName);
-                    return element === parentSubComponent;
-                  });
-                }
-
-                matchedSubComponents.forEach(function (_component) {
-                  if (polymorph_typeof(value) === 'object') {
-                    polymorph(_component, value, false, globals, parentElement);
-                  } else if (typeof value === 'function') {
-                    polymorph(_component, value(_component), false, globals, parentElement);
-                  }
-                });
-              }
-              /**
-               * Handle module `group` and `wrapper`
-               */
-              else if (key === 'group' || key === 'wrapper') {
-                  // @TODO this currently runs for each item in the group/wrapper,
-                  // should ideally run just once per group/wrapper
-                  element.parentNode.classList.forEach(function (className) {
-                    if (className.indexOf('group') === 0 || className.indexOf('wrapper') === 0) {
-                      var wrapperValues = polymorph_typeof(value) === 'object' ? value : value(element.parentNode);
-                      var childValues = polymorph_typeof(value) === 'object' ? value : value(element); // apply styles to wrapper/group element
-
-                      polymorph(element.parentNode, wrapperValues, false, globals, parentElement); // apply styles to child modules
-
-                      polymorph(element, childValues, false, globals, parentElement);
-                    }
-                  });
-                  return {
-                    v: void 0
-                  };
-                }
-                /**
-                 * Handle `hover` interaction
-                 */
-                else if (key === ':hover') {
-                    var stringifiedState = stringifyState(values);
-                    var isHoverState = parentElement.data.states.some(function (state) {
-                      return state.type === 'mouseover' && state.element === element && state.value === stringifiedState;
-                    });
-
-                    if (!isHoverState) {
-                      parentElement.data.states.push({
-                        type: 'mouseover',
-                        element: element,
-                        value: stringifiedState
-                      });
-                      element.addEventListener('mouseover', function mouseover() {
-                        element.removeEventListener('mouseover', mouseover);
-                        parentElement.repaint.states.push(function () {
-                          return polymorph(element, value, false, globals, parentElement);
-                        });
-                        polymorph(element, value, false, globals, parentElement);
-                      }, false);
-                      element.addEventListener('mouseout', function mouseout() {
-                        element.removeEventListener('mouseout', mouseout);
-                        parentElement.data.states = parentElement.data.states.filter(function (state) {
-                          return !(state.type === 'mouseover' && state.element === element && state.value === stringifiedState);
-                        });
-                        parentElement.repaint.states = [];
-                        parentElement.repaint();
-                      }, false);
-                    }
-                  }
-                  /**
-                   * Handle `focus` interaction
-                   */
-                  else if (key === ':focus') {
-                      // handleState(parentElement, element, ['focus', 'blur'], value, globals);
-                      var isFocusState = parentElement.data.states.some(function (state) {
-                        return state.type === 'focus' && state.element === element;
-                      });
-
-                      if (!isFocusState) {
-                        parentElement.data.states.push({
-                          type: 'focus',
-                          element: element
-                        });
-                        element.addEventListener('focus', function focus() {
-                          element.removeEventListener('focus', focus);
-                          polymorph(element, value, false, globals, parentElement);
-                        }, true);
-                        element.addEventListener('blur', function blur() {
-                          element.removeEventListener('blur', blur);
-                          parentElement.data.states = parentElement.data.states.filter(function (state) {
-                            return !(state.type === 'focus' && state.element === element);
-                          });
-                          parentElement.repaint();
-                        }, true);
-                      }
-                    }
-                    /**
-                     * Handle `before` pseudo element
-                     */
-                    // else if (key === ':before') {
-                    //     console.log(value);
-                    // }
-
-                    /**
-                     * Handle case where CSS `value` to be applied to `element` is a function
-                     */
-                    else if (typeof value === 'function') {
-                        if (!element.data.properties[key] || element.data.properties[key].specificity < specificity) {
-                          if (isValidCssProperty(key)) {
-                            element.style[key] = value(element.style[key]);
-                            element.data.properties[key] = {
-                              value: value(element.style[key]),
-                              specificity: specificity
-                            };
-                          }
-                        } else {// @TODO handle condition (what is it?)
-                        }
-                      } else {// @TODO handle condition (what is it?)
-                        }
-    }
-    /**
-     * Handle CSS property
-     */
-    else {
-        var props = element.data.properties;
-
-        if (!props[key] || !props[key].specificity || props[key].specificity < specificity) {
-          element.style[key] = value;
-          props[key] = {
-            value: value,
-            specificity: specificity
-          };
-        }
-      }
-  };
-
-  for (var _i = 0; _i < _arr.length; _i++) {
-    var _ret = _loop();
-
-    if (polymorph_typeof(_ret) === "object") return _ret.v;
-  }
-  /**
-   * Dispatch initial event when styles first mount
-   */
-
-
-  if (element === parentElement && config !== false) {
-    element.dispatchEvent(new Event('stylesdidmount'));
-  }
-}
-/**
- * Wrapper for sQuery `hasModifier()`
- */
-
-polymorph.modifier = function (element, modifier, modifierGlue, componentGlue) {
-  var Synergy = window.Synergy || {};
-  modifierGlue = modifierGlue || Synergy.modifierGlue || '-';
-  componentGlue = componentGlue || Synergy.componentGlue || '_';
-  return sQuery.hasModifier.bind({
-    DOMNodes: element,
-    modifierGlue: modifierGlue,
-    componentGlue: componentGlue
-  })(modifier);
-};
-/**
- * Attach to Window
- */
-
-
-if (typeof window !== 'undefined') {
-  window.polymorph = polymorph;
 }
 
 /***/ })

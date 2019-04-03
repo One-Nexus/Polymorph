@@ -35,6 +35,10 @@ export default function polymorph(element, styles, config = {}, globals) {
  */
 function handleStyleSheet(element, stylesheet, config, context = []) {
     if (!element.polymorph) {
+        const WRAPPER_ELEMENT = [].slice.call(element.parentNode.classList).some(className => {
+            return (className.indexOf('group') === 0 || className.indexOf('wrapper') === 0);
+        }) && element.parentNode;
+
         element.polymorph = {
             rules: [],
             COMPONENTS: sQuery.getComponents.bind({...config})(element),
@@ -46,6 +50,10 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
         element.repaint = function(disableDependentElements) {
             let allDependentElements = [];
 
+            if (WRAPPER_ELEMENT) {
+                WRAPPER_ELEMENT.repaint(true)
+            }
+
             [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(el => {
                 if (el.polymorph) {
                     el.polymorph.rules.forEach(rule => {
@@ -53,6 +61,11 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
                             if (ruleContext.value === 'hover') {
                                 return ruleContext.source.polymorph.isHovered;
                             }
+
+                            if (ruleContext.value === 'focus') {
+                                return ruleContext.source.polymorph.isFocused;
+                            }
+
                             return sQuery.hasModifier.bind({...config})(ruleContext.source, ruleContext.value)
                         })) {
                             const dependentElements = doStyles(el, rule.styles) || [];
@@ -77,6 +90,8 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
         };
     }
 
+    // @TODO - rules are being duplicated so find a way to either remove
+    // duplicates or never add them in the first place
     element.polymorph.rules = element.polymorph.rules.concat({
         context: context,
         styles: stylesheet
@@ -151,7 +166,9 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
             const subComponent = key.replace('subComponent(', '').replace(/\)/g, '');
             const subComponents = sQuery.getSubComponents.bind({...config})(element, subComponent);
 
-            return;
+            return subComponents.forEach(component => {
+                return handleStyleSheet(component, value, config, context);
+            });
         }
     
         // Handle `modifiers`
@@ -188,12 +205,56 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
 
         // Handle `focus` interaction
         if (key === ':focus') {
+            handleStyleSheet(element, value, config, context.concat({
+                source: element,
+                value: 'focus'
+            }));
+
+            element.addEventListener('focus', event => {
+                element.polymorph.isFocused = true;
+
+                element.repaint();
+            });
+
+            element.addEventListener('blur', event => {
+                element.polymorph.isFocused = false;
+
+                element.repaint();
+            });
+
             return;
+        }
+
+        // Handle Group/Wrapper elements
+        if (key === 'group' || key === 'wrapper') {
+            const wrapper = element.parentNode;
+
+            return wrapper.classList.forEach(className => {
+                if (className.indexOf('group') === 0 || className.indexOf('wrapper') === 0) {
+                    handleStyleSheet(wrapper, value, config, context);
+                }
+            });
         }
     });
 
-    // Sort rules to ensure rules without context are applied first
-    element.polymorph.rules.sort((a, b) => a.context.length - b.context.length);
+    element.polymorph.rules.sort((a, b) => {
+        if (!a.context.length && !b.context.length) {
+            return 0;
+        }
+        if (a.context.length && !b.context.length) {
+            return 1;
+        }
+        if (!a.context.length && b.context.length) {
+            return -1;
+        }
+        if (a.context.some(c => c.value === 'hover') && b.context.some(c => c.value === 'hover')) {
+            return 0;
+        }
+        if (b.context.some(c => c.value === 'hover')) {
+            return -1;
+        }
+        return 0;
+    });
 }
 
 /**

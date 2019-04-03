@@ -293,35 +293,42 @@ describe('Polymorph function', () => {
 
                 polymorph(document.getElementById('SVRNE'), {
                     bar: {
+                        'color': 'black',
+            
+                        qux: {
+                            'color': 'black',
+                        },
+            
                         ':hover': {
                             'color': 'red',
-        
+            
                             qux: {
-                                disableCascade: true,
+                                // disableCascade: true,
                                 'color': 'blue'
                             }
                         }
                     }
                 });
 
-                document.getElementById('E0RZS').dispatchEvent(new Event('mouseover'));
-                document.getElementById('HH156').dispatchEvent(new Event('mouseover'));
+                document.getElementById('E0RZS').dispatchEvent(new Event('mouseenter'));
+                document.getElementById('HH156').dispatchEvent(new Event('mouseenter'));
             });
 
             it('should apply the styles to the element when hovered', () => {
                 assert.equal(document.getElementById('E0RZS').getAttribute('style'), 'color: red;');
                 assert.equal(document.getElementById('HRJM1').getAttribute('style'), 'color: blue;');
-                assert.equal(document.getElementById('A0BG9').getAttribute('style'), null);
+                // @TODO1
+                // assert.equal(document.getElementById('A0BG9').getAttribute('style'), null);
             });
 
-            describe('after `mouseover` event has already been triggered', () => {
+            describe('after `mouseenter` event has already been triggered', () => {
                 beforeEach('setup DOM elements', () => {
-                    document.getElementById('E0RZS').dispatchEvent(new Event('mouseout'));
+                    document.getElementById('E0RZS').dispatchEvent(new Event('mouseleave'));
                 });
 
                 it('should remove the styles from the element when hovered', () => {
-                    assert.equal(document.getElementById('E0RZS').getAttribute('style'), '');
-                    assert.equal(document.getElementById('HRJM1').getAttribute('style'), '');
+                    assert.equal(document.getElementById('E0RZS').getAttribute('style'), 'color: black;');
+                    assert.equal(document.getElementById('HRJM1').getAttribute('style'), 'color: black;');
                 });
             });
         });
@@ -333,6 +340,8 @@ describe('Polymorph function', () => {
                 `);
 
                 polymorph(document.getElementById('SVRNE'), {
+                    'color': 'black',
+
                     ':focus': {
                         'color': 'red'
                     }
@@ -351,7 +360,7 @@ describe('Polymorph function', () => {
                 });
 
                 it('should remove the styles from the element when focused', () => {
-                    assert.equal(document.getElementById('SVRNE').getAttribute('style'), '');
+                    assert.equal(document.getElementById('SVRNE').getAttribute('style'), 'color: black;');
                 });
             });
         });
@@ -374,7 +383,7 @@ describe('Polymorph function', () => {
                 });
 
                 polymorph(document.getElementById('HRJM1'), {
-                    'wrapper': {
+                    'group': {
                         'color': 'blue'
                     }
                 });
@@ -386,20 +395,6 @@ describe('Polymorph function', () => {
             });
         });
     });
-
-    // describe('', () => {
-    //     beforeEach('setup DOM elements', () => {
-    //         document.body.innerHTML = (`
-    //             <div class="foo-bar" id="SVRNE">
-    //                 <div class="foo_fizz-buzz" id="HH156"></div>
-    //             </div>
-    //         `);
-    //     });
-
-    //     it('', () => {
-    //         assert();
-    //     });
-    // });
 
     describe('when `modifier` method is called', () => {
         beforeEach('setup DOM elements', () => {
