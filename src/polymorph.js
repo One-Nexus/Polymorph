@@ -90,8 +90,6 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
         };
     }
 
-    // @TODO - rules are being duplicated so find a way to either remove
-    // duplicates or never add them in the first place
     element.polymorph.rules = element.polymorph.rules.concat({
         context: context,
         styles: stylesheet
@@ -100,6 +98,8 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
     if (typeof stylesheet === 'function') {
         stylesheet = stylesheet(element);
     }
+
+    if (!stylesheet) return;
 
     Object.entries(stylesheet).forEach(([key, value]) => {
         let COMPONENTS = sQuery.getComponents.bind({...config})(element, key);
@@ -267,7 +267,11 @@ function doStyles(el, styles) {
 
     Object.entries(styles).forEach(([key, value]) => {
         if (typeof value === 'function') {
-            return;
+            try {
+                return el.style[key] = value(el.style[key]);
+            } catch(error) {
+                return;
+            }
         }
 
         return el.style[key] = value;
