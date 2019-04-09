@@ -17,7 +17,18 @@ export default function polymorph(element, styles, config = {}, globals) {
     const componentGlue = config.componentGlue || Synergy.componentGlue || '_';
 
     const CONFIG = { componentGlue, modifierGlue };
-    const STYLESHEET = (typeof styles === 'function') ? styles(element, config, globals) : styles;
+
+    let STYLESHEET = styles;
+
+    if (typeof styles === 'function') {
+        STYLESHEET = styles(element, config, globals);
+    }
+
+    if (styles.constructor === Array) {
+        STYLESHEET = styles.map(style => {
+            return typeof style === 'function' ? style(element, config, globals) : style
+        });
+    }
 
     if (STYLESHEET.constructor === Array) {
         if (STYLESHEET.every(value => value && value.constructor === Object)) {
@@ -50,7 +61,7 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
         element.repaint = function(disableDependentElements) {
             let allDependentElements = [];
 
-            if (WRAPPER_ELEMENT) {
+            if (WRAPPER_ELEMENT && WRAPPER_ELEMENT.repaint) {
                 WRAPPER_ELEMENT.repaint(true)
             }
 
@@ -264,6 +275,8 @@ function doStyles(el, styles) {
     if (typeof styles === 'function') {
         styles = styles(el);
     }
+
+    if (!styles) return;
 
     Object.entries(styles).forEach(([key, value]) => {
         if (typeof value === 'function') {
