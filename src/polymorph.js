@@ -135,9 +135,7 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
         if (COMPONENTS.length) {
             if (value.disableCascade) {
                 COMPONENTS = COMPONENTS.filter(component => {
-                    return COMPONENTS.every(_component => {
-                        return component.contains(_component);
-                    });
+                    return COMPONENTS.every(_component => component.contains(_component));
                 });
             }
 
@@ -283,7 +281,7 @@ function doStyles(el, styles) {
             try {
                 return el.style[key] = value(el.style[key]);
             } catch(error) {
-                return;
+                return error;
             }
         }
 
