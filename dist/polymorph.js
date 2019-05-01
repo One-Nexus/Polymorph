@@ -103,8 +103,9 @@ return /******/ (function(modules) { // webpackBootstrap
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function getNamespace(query, strict, config) {
-  config = config || this;
+  config = Object.assign(this || {}, config || {});
   var _config = config,
+      namespace = _config.namespace,
       modifierGlue = _config.modifierGlue,
       componentGlue = _config.componentGlue;
 
@@ -114,11 +115,27 @@ function getNamespace(query, strict, config) {
     }
 
     if (query.classList.length) {
-      if (strict) {
-        return query.classList[0].split(modifierGlue)[0];
+      var targetClass;
+
+      if (namespace) {
+        targetClass = [].slice.call(query.classList).filter(function (className) {
+          return className.indexOf(namespace) === 0;
+        })[0];
       }
 
-      return query.classList[0].split(modifierGlue)[0].split(componentGlue)[0];
+      if (!namespace || !targetClass) {
+        targetClass = query.classList[0];
+      }
+
+      if (strict) {
+        return targetClass.split(modifierGlue)[0];
+      }
+
+      return targetClass.split(modifierGlue)[0].split(componentGlue)[0];
+    }
+
+    if (namespace) {
+      return namespace;
     }
   }
 
@@ -142,12 +159,12 @@ function getNamespace(query, strict, config) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return parent; });
-/* harmony import */ var _getNamespace__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(0);
+/* harmony import */ var _utilities_getNamespace__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(0);
 
 function parent(node, query, config) {
-  config = config || this;
+  config = Object.assign(this || {}, config || {});
 
-  if (node instanceof NodeList) {
+  if (node instanceof NodeList || node instanceof Array) {
     return [].slice.call(node).map(function (node) {
       return parent(node, query, config);
     });
@@ -156,7 +173,7 @@ function parent(node, query, config) {
   var _config = config,
       componentGlue = _config.componentGlue,
       modifierGlue = _config.modifierGlue;
-  var namespace = config.namespace || Object(_getNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(node, false, config);
+  var namespace = config.namespace || Object(_utilities_getNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(node, false, config);
   var $query = query || namespace;
 
   if ($query !== namespace) {
@@ -169,7 +186,7 @@ function parent(node, query, config) {
     return parentComponent;
   }
 
-  namespace = config.namespace || Object(_getNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(node, true, config);
+  namespace = config.namespace || Object(_utilities_getNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(node, true, config);
 
   if (namespace && namespace.indexOf(query > -1)) {
     $query = namespace.substring(0, namespace.indexOf(query) + query.length);
@@ -189,26 +206,31 @@ function parent(node, query, config) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 
-// EXTERNAL MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/refactor/api/getNamespace.js
+// EXTERNAL MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/src/utilities/getNamespace.js
 var getNamespace = __webpack_require__(0);
 
-// EXTERNAL MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/refactor/api/parent.js
+// EXTERNAL MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/src/api/parent.js
 var api_parent = __webpack_require__(1);
 
-// CONCATENATED MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/refactor/utilities/filterElements.js
+// CONCATENATED MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/src/utilities/filterElements.js
 
 
-function filterElements(node, elements, config) {
-  var namespace = config.namespace || Object(getNamespace["a" /* default */])(node, false, config);
+function filterElements(node, elements, subComponent, config) {
+  var namespace = config.namespace || Object(getNamespace["a" /* default */])(node, subComponent, config);
   var sourceParent = Object(api_parent["default"])(node, namespace, config);
   if (!sourceParent) return elements;
   elements = [].slice.call(elements).filter(function (element) {
     var targetParent = Object(api_parent["default"])(element, namespace, config);
+
+    if (!targetParent) {
+      return true;
+    }
+
     return targetParent === sourceParent;
   });
   return elements;
 }
-// CONCATENATED MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/refactor/utilities/isValidSelector.js
+// CONCATENATED MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/src/utilities/isValidSelector.js
 function isValidSelector(selector) {
   if (!selector || typeof selector !== 'string') return false;
   var stub = document.createElement('br');
@@ -222,16 +244,20 @@ function isValidSelector(selector) {
 
   return true;
 }
-// CONCATENATED MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/refactor/api/getComponents.js
+// CONCATENATED MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/src/api/getComponents.js
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return getComponents; });
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 
 
 
 function getComponents(node, componentName, config) {
-  config = config || this;
+  config = Object.assign(this || {}, config || {});
   if (componentName && !isValidSelector(componentName)) return [];
 
-  if (node instanceof NodeList) {
+  if (node instanceof NodeList || node instanceof Array) {
     return [].slice.call(node).reduce(function (matches, node) {
       return matches.concat([].slice.call(getComponents(node, componentName, config)));
     }, []);
@@ -252,14 +278,18 @@ function getComponents(node, componentName, config) {
   }
 
   components = [].slice.call(components).filter(function (element) {
-    var sourceNamespace = Object(getNamespace["a" /* default */])(node, true, config);
-    var targetNamespace = Object(getNamespace["a" /* default */])(element, true, config);
+    var sourceNamespace = Object(getNamespace["a" /* default */])(node, true, _objectSpread({}, config, {
+      namespace: namespace
+    }));
+    var targetNamespace = Object(getNamespace["a" /* default */])(element, true, _objectSpread({}, config, {
+      namespace: namespace
+    }));
     var sourceDepth = (sourceNamespace.match(new RegExp(componentGlue, 'g')) || []).length;
     var targetDepth = (targetNamespace.match(new RegExp(componentGlue, 'g')) || []).length; // Special condition: if no componentName passed and we want sub-components,
     // find ALL child sub-components, as parent modules cannot have direct
     // descendant sub-components
 
-    if (subComponent && !componentName) {
+    if (subComponent && !componentName && sourceNamespace.indexOf(componentGlue) === -1) {
       return true;
     }
 
@@ -272,20 +302,25 @@ function getComponents(node, componentName, config) {
     }
 
     var modifierCriteria = true;
+    var targetClass = [].slice.call(element.classList).filter(function (className) {
+      return className.indexOf(namespace) === 0;
+    })[0];
 
     if (config.modifier) {
-      modifierCriteria = [].slice.call(element.classList).filter(function (className) {
-        return className.indexOf(namespace) === 0;
-      })[0].indexOf(config.modifier) > -1;
+      modifierCriteria = targetClass.indexOf(config.modifier) > -1;
     }
 
     if (!subComponent && sourceDepth > 1) {
+      if (targetClass.split(componentGlue).length - 1 > 1) {
+        return false;
+      }
+
       return modifierCriteria;
     }
 
     return modifierCriteria && targetDepth === sourceDepth;
   });
-  components = filterElements(node, components, config);
+  components = filterElements(node, components, subComponent, config);
   return components;
 }
 
@@ -337,7 +372,17 @@ function polymorph(element, styles) {
     componentGlue: componentGlue,
     modifierGlue: modifierGlue
   };
-  var STYLESHEET = typeof styles === 'function' ? styles(element, config, globals) : styles;
+  var STYLESHEET = styles;
+
+  if (typeof styles === 'function') {
+    STYLESHEET = styles(element, config, globals);
+  }
+
+  if (styles.constructor === Array) {
+    STYLESHEET = styles.map(function (style) {
+      return typeof style === 'function' ? style(element, config, globals) : style;
+    });
+  }
 
   if (STYLESHEET.constructor === Array) {
     if (STYLESHEET.every(function (value) {
@@ -359,11 +404,11 @@ function polymorph(element, styles) {
 
 function handleStyleSheet(element, stylesheet, config) {
   var context = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
-  var WRAPPER_ELEMENT = [].slice.call(element.parentNode.classList).some(function (className) {
-    return className.indexOf('group') === 0 || className.indexOf('wrapper') === 0;
-  }) && element.parentNode;
 
   if (!element.polymorph) {
+    var WRAPPER_ELEMENT = [].slice.call(element.parentNode.classList).some(function (className) {
+      return className.indexOf('group') === 0 || className.indexOf('wrapper') === 0;
+    }) && element.parentNode;
     element.polymorph = {
       rules: [],
       COMPONENTS: sQuery.getComponents.bind(_objectSpread({}, config))(element),
@@ -376,7 +421,7 @@ function handleStyleSheet(element, stylesheet, config) {
     element.repaint = function (disableDependentElements) {
       var allDependentElements = [];
 
-      if (WRAPPER_ELEMENT) {
+      if (WRAPPER_ELEMENT && WRAPPER_ELEMENT.repaint) {
         WRAPPER_ELEMENT.repaint(true);
       }
 
@@ -429,6 +474,7 @@ function handleStyleSheet(element, stylesheet, config) {
     stylesheet = stylesheet(element);
   }
 
+  if (!stylesheet) return;
   Object.entries(stylesheet).forEach(function (_ref) {
     var _ref2 = _slicedToArray(_ref, 2),
         key = _ref2[0],
@@ -544,17 +590,41 @@ function handleStyleSheet(element, stylesheet, config) {
 
     if (key === 'group' || key === 'wrapper') {
       var wrapper = element.parentNode;
-      wrapper.classList.forEach(function (className) {
+      return wrapper.classList.forEach(function (className) {
         if (className.indexOf('group') === 0 || className.indexOf('wrapper') === 0) {
           handleStyleSheet(wrapper, value, config, context);
         }
       });
-      return;
     }
-  }); // Sort rules to ensure rules without context are applied first
-
+  });
   element.polymorph.rules.sort(function (a, b) {
-    return a.context.length - b.context.length;
+    if (!a.context.length && !b.context.length) {
+      return 0;
+    }
+
+    if (a.context.length && !b.context.length) {
+      return 1;
+    }
+
+    if (!a.context.length && b.context.length) {
+      return -1;
+    }
+
+    if (a.context.some(function (c) {
+      return c.value === 'hover';
+    }) && b.context.some(function (c) {
+      return c.value === 'hover';
+    })) {
+      return 0;
+    }
+
+    if (b.context.some(function (c) {
+      return c.value === 'hover';
+    })) {
+      return -1;
+    }
+
+    return 0;
   });
 }
 /**
@@ -567,13 +637,18 @@ function doStyles(el, styles) {
     styles = styles(el);
   }
 
+  if (!styles) return;
   Object.entries(styles).forEach(function (_ref3) {
     var _ref4 = _slicedToArray(_ref3, 2),
         key = _ref4[0],
         value = _ref4[1];
 
     if (typeof value === 'function') {
-      return;
+      try {
+        return el.style[key] = value(el.style[key]);
+      } catch (error) {
+        return error;
+      }
     }
 
     return el.style[key] = value;
@@ -624,7 +699,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _getComponents__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
 
 function getSubComponents(node, subComponentName, config) {
-  config = config || this;
+  config = Object.assign(this || {}, config || {});
   config.subComponent = true;
   return Object(_getComponents__WEBPACK_IMPORTED_MODULE_0__["default"])(node, subComponentName, config);
 }
@@ -636,10 +711,10 @@ function getSubComponents(node, subComponentName, config) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return hasModifier; });
-/* harmony import */ var _getNamespace__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(0);
+/* harmony import */ var _utilities_getNamespace__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(0);
 
 function hasModifier(node, modifier, config) {
-  config = config || this;
+  config = Object.assign(this || {}, config || {});
   if (!modifier) return;
 
   if (modifier.constructor === Array) {
@@ -648,7 +723,7 @@ function hasModifier(node, modifier, config) {
     });
   }
 
-  if (node instanceof NodeList) {
+  if (node instanceof NodeList || node instanceof Array) {
     return [].slice.call(node).every(function (node) {
       return hasModifier(node, modifier, config);
     });
@@ -656,8 +731,8 @@ function hasModifier(node, modifier, config) {
 
   var _config = config,
       modifierGlue = _config.modifierGlue;
+  var namespace = config.namespace || node.namespace || Object(_utilities_getNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(node, false, config);
   return [].slice.call(node.classList).some(function (className) {
-    var namespace = config.namespace || node.namespace || Object(_getNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(node, false, config);
     var matchIndex = className.indexOf(modifierGlue + modifier);
     var namespaceMatch = className.indexOf(namespace) === 0;
     var isModifierTest1 = className.indexOf(modifierGlue + modifier + modifierGlue) > -1;
