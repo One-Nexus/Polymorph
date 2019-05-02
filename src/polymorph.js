@@ -3,10 +3,10 @@ var sQuery = (typeof window !== 'undefined') && window.sQuery;
 // `process` and `require` are exploited to help reduce bundle size
 if (!sQuery || (typeof process !== 'undefined' && !process.env.SYNERGY)) {
     sQuery = {
-        getComponents: require('../../../sQuery/sQuery/src/api/getComponents').default,
-        getSubComponents: require('../../../sQuery/sQuery/src/api/getSubComponents').default,
-        hasModifier: require('../../../sQuery/sQuery/src/api/hasModifier').default,
-        parent: require('../../../sQuery/sQuery/src/api/parent').default
+        getComponents: require('@onenexus/squery/src/api/getComponents').default,
+        getSubComponents: require('@onenexus/squery/src/api/getSubComponents').default,
+        hasModifier: require('@onenexus/squery/src/api/hasModifier').default,
+        parent: require('@onenexus/squery/src/api/parent').default
     }
 }
 

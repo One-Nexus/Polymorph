@@ -33,7 +33,7 @@ export default function() {
         module: {
             rules: [{
                 test: /\.(js)$/,
-                exclude: /node_modules/,
+                exclude: /node_modules\/(?!(@onenexus)\/).*/, 
                 use: {
                     loader: 'babel-loader'
                 }

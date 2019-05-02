@@ -206,13 +206,13 @@ function parent(node, query, config) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 
-// EXTERNAL MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/src/utilities/getNamespace.js
+// EXTERNAL MODULE: ./node_modules/@onenexus/squery/src/utilities/getNamespace.js
 var getNamespace = __webpack_require__(0);
 
-// EXTERNAL MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/src/api/parent.js
+// EXTERNAL MODULE: ./node_modules/@onenexus/squery/src/api/parent.js
 var api_parent = __webpack_require__(1);
 
-// CONCATENATED MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/src/utilities/filterElements.js
+// CONCATENATED MODULE: ./node_modules/@onenexus/squery/src/utilities/filterElements.js
 
 
 function filterElements(node, elements, subComponent, config) {
@@ -230,7 +230,7 @@ function filterElements(node, elements, subComponent, config) {
   });
   return elements;
 }
-// CONCATENATED MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/src/utilities/isValidSelector.js
+// CONCATENATED MODULE: ./node_modules/@onenexus/squery/src/utilities/isValidSelector.js
 function isValidSelector(selector) {
   if (!selector || typeof selector !== 'string') return false;
   var stub = document.createElement('br');
@@ -244,7 +244,7 @@ function isValidSelector(selector) {
 
   return true;
 }
-// CONCATENATED MODULE: /Users/edmund.reed/Projects/sQuery/sQuery/src/api/getComponents.js
+// CONCATENATED MODULE: ./node_modules/@onenexus/squery/src/api/getComponents.js
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return getComponents; });
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
 
