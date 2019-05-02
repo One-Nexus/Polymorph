@@ -14,6 +14,7 @@ export default function() {
             path: path.resolve(__dirname, 'dist/'),
             filename: '[name].js',
             publicPath: '/',
+            globalObject: 'typeof self !== \'undefined\' ? self : this',
             libraryTarget: 'umd'
         },
 
@@ -33,7 +34,7 @@ export default function() {
         module: {
             rules: [{
                 test: /\.(js)$/,
-                exclude: /node_modules\/(?!(@onenexus)\/).*/, 
+                exclude: '/node_modules/',
                 use: {
                     loader: 'babel-loader'
                 }
