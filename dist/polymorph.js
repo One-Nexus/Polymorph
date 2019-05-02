@@ -351,9 +351,12 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-var sQuery = typeof window !== 'undefined' && window.sQuery; // `process` and `require` are exploited to help reduce bundle size
+// `process` and `require` are exploited to help reduce bundle size
+if (typeof process === 'undefined') window.process = {
+  env: {}
+};
 
-if (!sQuery || typeof process !== 'undefined' && !process.env.SYNERGY) {
+if (!process.env.SYNERGY && typeof sQuery === 'undefined') {
   sQuery = {
     getComponents: __webpack_require__(2).default,
     getSubComponents: __webpack_require__(4).default,

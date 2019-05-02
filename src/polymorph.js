@@ -1,7 +1,7 @@
-var sQuery = (typeof window !== 'undefined') && window.sQuery;
-
 // `process` and `require` are exploited to help reduce bundle size
-if (!sQuery || (typeof process !== 'undefined' && !process.env.SYNERGY)) {
+if (typeof process === 'undefined') window.process = { env: {} };
+
+if (!process.env.SYNERGY && typeof sQuery === 'undefined') {
     sQuery = {
         getComponents: require('@onenexus/squery/src/api/getComponents').default,
         getSubComponents: require('@onenexus/squery/src/api/getSubComponents').default,

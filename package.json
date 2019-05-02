@@ -1,6 +1,6 @@
 {
   "name": "@onenexus/polymorph",
-  "version": "1.0.0",
+  "version": "1.0.0-beta.1",
   "description": "Style DOM elements that follow the Synergy naming convention using JavaScript",
   "main": "dist/polymorph.js",
   "author": "(Edmund Reed)[http://twitter.com/esr360] <esr360@live.com>",
