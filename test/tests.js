@@ -1,7 +1,7 @@
 import assert from 'assert';
 import jsdom from 'jsdom-global';
 import sQuery from '@onenexus/squery';
-import polymorph from '../dist/polymorph';
+import polymorph from '../src/polymorph';
 
 jsdom();
 

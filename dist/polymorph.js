@@ -355,20 +355,21 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 if (typeof process === 'undefined') window.process = {
   env: {}
 };
-
-if (!process.env.SYNERGY && typeof sQuery === 'undefined') {
-  sQuery = {
-    getComponents: __webpack_require__(2).default,
-    getSubComponents: __webpack_require__(4).default,
-    hasModifier: __webpack_require__(5).default,
-    parent: __webpack_require__(1).default
-  };
-}
-
 function polymorph(element, styles) {
   var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
   var globals = arguments.length > 3 ? arguments[3] : undefined;
   var Synergy = window.Synergy || {};
+  var sQuery = window.sQuery;
+
+  if (!process.env.SYNERGY && !sQuery) {
+    sQuery = {
+      getComponents: __webpack_require__(2).default,
+      getSubComponents: __webpack_require__(4).default,
+      hasModifier: __webpack_require__(5).default,
+      parent: __webpack_require__(1).default
+    };
+  }
+
   var modifierGlue = config.modifierGlue || Synergy.modifierGlue || '-';
   var componentGlue = config.componentGlue || Synergy.componentGlue || '_';
   var CONFIG = {
@@ -652,6 +653,11 @@ function doStyles(el, styles) {
       } catch (error) {
         return error;
       }
+    } // https://stackoverflow.com/questions/55867116
+
+
+    if (!isNaN(key)) {
+      return;
     }
 
     return el.style[key] = value;

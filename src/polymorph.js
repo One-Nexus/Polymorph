@@ -1,17 +1,19 @@
 // `process` and `require` are exploited to help reduce bundle size
 if (typeof process === 'undefined') window.process = { env: {} };
 
-if (!process.env.SYNERGY && typeof sQuery === 'undefined') {
-    sQuery = {
-        getComponents: require('@onenexus/squery/src/api/getComponents').default,
-        getSubComponents: require('@onenexus/squery/src/api/getSubComponents').default,
-        hasModifier: require('@onenexus/squery/src/api/hasModifier').default,
-        parent: require('@onenexus/squery/src/api/parent').default
-    }
-}
-
 export default function polymorph(element, styles, config = {}, globals) {
     var Synergy = window.Synergy || {};
+
+    let sQuery = window.sQuery;
+    
+    if (!process.env.SYNERGY && !sQuery) {
+        sQuery = {
+            getComponents: require('@onenexus/squery/src/api/getComponents').default,
+            getSubComponents: require('@onenexus/squery/src/api/getSubComponents').default,
+            hasModifier: require('@onenexus/squery/src/api/hasModifier').default,
+            parent: require('@onenexus/squery/src/api/parent').default
+        }
+    }
 
     const modifierGlue  = config.modifierGlue  || Synergy.modifierGlue  || '-';
     const componentGlue = config.componentGlue || Synergy.componentGlue || '_';
@@ -283,6 +285,11 @@ function doStyles(el, styles) {
             } catch(error) {
                 return error;
             }
+        }
+
+        // https://stackoverflow.com/questions/55867116
+        if (!isNaN(key)) {
+            return;
         }
 
         return el.style[key] = value;
