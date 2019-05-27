@@ -10,6 +10,8 @@ export default function() {
     return {
         entry,
 
+        mode: 'production',
+
         output: {
             path: path.resolve(__dirname, 'dist/'),
             filename: '[name].js',
