@@ -173,11 +173,21 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
         }
 
         // Handle `sub-components`
-        if (key.indexOf('subComponent(') > -1) {
-            const subComponent = key.replace('subComponent(', '').replace(/\)/g, '');
+        if (key.indexOf('sub-component(') > -1) {
+            const subComponent = key.replace('sub-component(', '').replace(/\)/g, '');
             const subComponents = sQuery.getSubComponents.bind({...config})(element, subComponent);
 
             return subComponents.forEach(component => {
+                return handleStyleSheet(component, value, config, context);
+            });
+        }
+
+        // Handle `components`
+        if (key.indexOf('component(') > -1) {
+            const component = key.replace('component(', '').replace(/\)/g, '');
+            const components = sQuery.getComponents.bind({...config})(element, component);
+
+            return components.forEach(component => {
                 return handleStyleSheet(component, value, config, context);
             });
         }

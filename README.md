@@ -261,7 +261,7 @@ element.repaint()
 
 > This method is attached directly to the DOM element after the initial `polymorph` call
 
-This is useful for updating the styles after an event that modifiers the DOM, such as a click event which adds an `active` modifier to an element. In order to repaint the element, you should call the `repaint()` method in the same place you handle the event.
+This is useful for updating the styles after an event that modifies the DOM, such as a click event which adds an `active` modifier to an element. In order to repaint the element, you should call the `repaint()` method in the same place you handle the event.
 
 ###### Example
 
@@ -289,7 +289,8 @@ polymorph(document.getElementById('alpha'), {
     }
 });
 
-// `#alpha` element now has a `repaint()` method
+// `#alpha` element and all targeted child components
+//  will now have a `repaint()` method
 ```
 
 ```jsx
@@ -309,7 +310,7 @@ document.querySelectorAll('.accordion').forEach(accordion => {
 ###### Using sQuery
 
 ```jsx
-sQuery('accordion').getComponents('panel').forEach((PANEL, index) => {
+sQuery('accordion').getComponents('panel').forEach(PANEL => {
     sQuery(PANEL).getComponent('title').addEventListener('click', () => {
         // the `repaint` method is called automatically
         // when using the sQuery API

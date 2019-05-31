@@ -37,19 +37,13 @@ export default function() {
             rules: [{
                 test: /\.(js)$/,
                 exclude: '/node_modules/',
-                use: {
-                    loader: 'babel-loader'
-                }
+                loader: 'babel-loader'
             }]
         },
 
         node: {
             process: false,
             Buffer: false
-        },
-
-        stats: { colors: true },
-
-        devtool: false
+        }
     }
 };

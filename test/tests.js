@@ -220,7 +220,7 @@ describe('Polymorph function', () => {
 
                 polymorph(document.getElementById('SVRNE'), {
                     'alpha': {
-                        'subComponent(beta)': {
+                        'sub-component(beta)': {
                             'color': 'blue'
                         }
                     }
@@ -228,7 +228,7 @@ describe('Polymorph function', () => {
 
                 polymorph(document.getElementById('SVRNE'), {
                     'alpha': {
-                        'subComponent(beta)': () => ({
+                        'sub-component(beta)': () => ({
                             'height': '16px'
                         })
                     }

@@ -540,10 +540,19 @@ function handleStyleSheet(element, stylesheet, config) {
     } // Handle `sub-components`
 
 
-    if (key.indexOf('subComponent(') > -1) {
-      var subComponent = key.replace('subComponent(', '').replace(/\)/g, '');
+    if (key.indexOf('sub-component(') > -1) {
+      var subComponent = key.replace('sub-component(', '').replace(/\)/g, '');
       var subComponents = sQuery.getSubComponents.bind(_objectSpread({}, config))(element, subComponent);
       return subComponents.forEach(function (component) {
+        return handleStyleSheet(component, value, config, context);
+      });
+    } // Handle `components`
+
+
+    if (key.indexOf('component(') > -1) {
+      var component = key.replace('component(', '').replace(/\)/g, '');
+      var components = sQuery.getComponents.bind(_objectSpread({}, config))(element, component);
+      return components.forEach(function (component) {
         return handleStyleSheet(component, value, config, context);
       });
     } // Handle `modifiers`
