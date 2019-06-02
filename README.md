@@ -367,3 +367,12 @@ window.Synergy = {
 ```
 
 > [Learn more about using Polymorph with Lucid](https://github.com/One-Nexus/Lucid/wiki/Module#propsstyleparser)
+
+---
+
+<a href="https://twitter.com/ESR360">
+    <img src="http://edmundreed.com/assets/images/twitter.gif?v=1" width="250px" />
+</a>
+<a href="https://github.com/ESR360">
+    <img src="http://edmundreed.com/assets/images/github.gif?v=1" width="250px" />
+</a>
