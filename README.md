@@ -1,3 +1,4 @@
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/One-Nexus/Polymorph/blob/master/LICENSE)
 [![Inline docs](http://inch-ci.org/github/One-Nexus/Polymorph.svg?branch=master)](http://inch-ci.org/github/One-Nexus/Polymorph)
 [![Build Status](https://travis-ci.com/One-Nexus/Polymorph.svg?branch=master)](https://travis-ci.com/One-Nexus/Polymorph)
 [![npm version](https://badge.fury.io/js/%40onenexus%2Fpolymorph.svg)](https://www.npmjs.com/package/@onenexus/polymorph)
