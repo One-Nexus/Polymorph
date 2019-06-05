@@ -2,7 +2,7 @@
 [![Inline docs](http://inch-ci.org/github/One-Nexus/Polymorph.svg?branch=master)](http://inch-ci.org/github/One-Nexus/Polymorph)
 [![Build Status](https://travis-ci.com/One-Nexus/Polymorph.svg?branch=master)](https://travis-ci.com/One-Nexus/Polymorph)
 [![npm version](https://badge.fury.io/js/%40onenexus%2Fpolymorph.svg)](https://www.npmjs.com/package/@onenexus/polymorph)
-[![npm version](https://img.shields.io/npm/dm/@onenexus/polymorph.svg)](https://www.npmjs.com/package/@onenexus/polymorph)
+[![npm downloads](https://img.shields.io/npm/dm/@onenexus/polymorph.svg)](https://www.npmjs.com/package/@onenexus/polymorph)
 [![codecov](https://codecov.io/gh/One-Nexus/Polymorph/branch/master/graph/badge.svg)](https://codecov.io/gh/One-Nexus/Polymorph)
 
 > Style Synergy modules/BEM DOM elements using JavaScript
