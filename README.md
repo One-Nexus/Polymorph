@@ -23,7 +23,7 @@ Polymorph is used for styling DOM elements that follow the [Synergy naming conve
 
 > [Learn how to integrate with React components](https://github.com/One-Nexus/Polymorph/wiki/Working-With-React)
 
-> [View a live demo using React + Polymorph](https://codesandbox.io/s/95k4y)
+> [View a live demo using React + Polymorph](https://codesandbox.io/s/20w10)
 
 ###### Example Module Markup
 
