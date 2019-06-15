@@ -71,6 +71,10 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
                 if (el.polymorph) {
                     el.polymorph.rules.forEach(rule => {
                         if (rule.context.every(ruleContext => {
+                            if (typeof ruleContext === 'function') {
+                                return ruleContext();
+                            }
+
                             if (ruleContext.value === 'hover') {
                                 return ruleContext.source.polymorph.isHovered;
                             }
@@ -81,6 +85,7 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
 
                             return sQuery.hasModifier.bind({...config})(ruleContext.source, ruleContext.value)
                         })) {
+                            // `doStyles()` applies the styles and returns dependent elements
                             const dependentElements = doStyles(el, rule.styles) || [];
 
                             dependentElements.length && allDependentElements.push(...dependentElements);
@@ -118,16 +123,42 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
         let COMPONENTS = sQuery.getComponents.bind({...config})(element, key);
         let SUB_COMPONENTS = sQuery.getSubComponents.bind({...config})(element, key);
 
-        //Handle case where desired element for styles to be applied is manually controlled
-        if (value instanceof Array && value[0]) {
-            if (value[0] instanceof HTMLElement) {
-                handleStyleSheet(value[0], value[1], config, context);
+        if (value.styles) {
+            if (value.condition) {
+                context = context.concat(value.condition);
             }
 
+            if (value.element) {
+                element = value.element;
+            }
+
+            return handleStyleSheet(element, value.styles, config, context);
+        }
+
+        if (value instanceof Array) {
+            if (typeof value[0] === 'undefined') {
+                return;
+            }
+
+            if (value.every(val => val && typeof val === 'object' && val.constructor === Object)) {
+                return value.forEach(val => handleStyleSheet(element, val, config, context));
+            }
+
+            //Handle case where desired element for styles to be applied is manually controlled
+            if (value[0] instanceof HTMLElement) {
+                return handleStyleSheet(value[0], value[1], config, context);
+            }
+
+            //Handle case where desired element for styles to be applied is manually controlled
             if (value[0] instanceof NodeList) {
                 value[0].forEach(el => {
                     return handleStyleSheet(el, value[1], config, context);
                 });
+            }
+
+            //Handle case condition to apply styles is to be manually controlled
+            if (typeof value[0] === 'function') {
+                return handleStyleSheet(element, value[1], config, context.concat(value[0]));
             }
 
             return;

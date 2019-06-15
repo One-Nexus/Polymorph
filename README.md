@@ -23,6 +23,8 @@ Polymorph is used for styling DOM elements that follow the [Synergy naming conve
 
 > [Learn how to integrate with React components](https://github.com/One-Nexus/Polymorph/wiki/Working-With-React)
 
+> [View a live demo using React + Polymorph](https://codesandbox.io/s/95k4y)
+
 ###### Example Module Markup
 
 ```html
@@ -310,7 +312,7 @@ document.querySelectorAll('.accordion').forEach(accordion => {
 });
 ```
 
-###### Using sQuery
+###### Using [sQuery](https://github.com/One-Nexus/sQuery)
 
 ```jsx
 sQuery('accordion').getComponents('panel').forEach(PANEL => {
@@ -320,6 +322,15 @@ sQuery('accordion').getComponents('panel').forEach(PANEL => {
         sQuery(PANEL).toggleModifier('visible');
     });
 });
+```
+
+###### Using [Lucid](https://github.com/One-Nexus/Lucid)
+
+```jsx
+// By passing a styles function/object to the `styles` prop of `<Module>`,
+// `repaint()` will be called on the approprate rendered DOM elements
+//  in the `componentDidUpdate` lifecycle method
+<Module name='myModule' styles={styles}>...</Module>
 ```
 
 ## Use With sQuery

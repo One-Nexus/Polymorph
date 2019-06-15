@@ -331,6 +331,8 @@ function getComponents(node, componentName, config) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return polymorph; });
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
@@ -433,6 +435,10 @@ function handleStyleSheet(element, stylesheet, config) {
         if (el.polymorph) {
           el.polymorph.rules.forEach(function (rule) {
             if (rule.context.every(function (ruleContext) {
+              if (typeof ruleContext === 'function') {
+                return ruleContext();
+              }
+
               if (ruleContext.value === 'hover') {
                 return ruleContext.source.polymorph.isHovered;
               }
@@ -445,6 +451,7 @@ function handleStyleSheet(element, stylesheet, config) {
             })) {
               var _allDependentElements;
 
+              // `doStyles()` applies the styles and returns dependent elements
               var dependentElements = doStyles(el, rule.styles) || [];
               dependentElements.length && (_allDependentElements = allDependentElements).push.apply(_allDependentElements, _toConsumableArray(dependentElements));
             }
@@ -485,17 +492,48 @@ function handleStyleSheet(element, stylesheet, config) {
         value = _ref2[1];
 
     var COMPONENTS = sQuery.getComponents.bind(_objectSpread({}, config))(element, key);
-    var SUB_COMPONENTS = sQuery.getSubComponents.bind(_objectSpread({}, config))(element, key); //Handle case where desired element for styles to be applied is manually controlled
+    var SUB_COMPONENTS = sQuery.getSubComponents.bind(_objectSpread({}, config))(element, key);
 
-    if (value instanceof Array && value[0]) {
-      if (value[0] instanceof HTMLElement) {
-        handleStyleSheet(value[0], value[1], config, context);
+    if (value.styles) {
+      if (value.condition) {
+        context = context.concat(value.condition);
       }
+
+      if (value.element) {
+        element = value.element;
+      }
+
+      return handleStyleSheet(element, value.styles, config, context);
+    }
+
+    if (value instanceof Array) {
+      if (typeof value[0] === 'undefined') {
+        return;
+      }
+
+      if (value.every(function (val) {
+        return val && _typeof(val) === 'object' && val.constructor === Object;
+      })) {
+        return value.forEach(function (val) {
+          return handleStyleSheet(element, val, config, context);
+        });
+      } //Handle case where desired element for styles to be applied is manually controlled
+
+
+      if (value[0] instanceof HTMLElement) {
+        return handleStyleSheet(value[0], value[1], config, context);
+      } //Handle case where desired element for styles to be applied is manually controlled
+
 
       if (value[0] instanceof NodeList) {
         value[0].forEach(function (el) {
           return handleStyleSheet(el, value[1], config, context);
         });
+      } //Handle case condition to apply styles is to be manually controlled
+
+
+      if (typeof value[0] === 'function') {
+        return handleStyleSheet(element, value[1], config, context.concat(value[0]));
       }
 
       return;
