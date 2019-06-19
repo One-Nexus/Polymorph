@@ -183,7 +183,7 @@ function parent(node, query, config) {
   var parentComponent = $query && node.closest(".".concat($query, ", [class*='").concat($query + modifierGlue, "']"));
 
   if (parentComponent) {
-    return parentComponent;
+    return typeof sQuery === 'function' ? sQuery(parentComponent) : parentComponent;
   }
 
   namespace = config.namespace || Object(_utilities_getNamespace__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"])(node, true, config);
@@ -195,7 +195,7 @@ function parent(node, query, config) {
   var parentSubComponent = $query && node.closest(".".concat($query, ", [class*='").concat($query + modifierGlue, "']"));
 
   if (parentSubComponent) {
-    return parentSubComponent;
+    return typeof sQuery === 'function' ? sQuery(parentSubComponent) : parentSubComponent;
   }
 }
 
@@ -321,7 +321,7 @@ function getComponents(node, componentName, config) {
     return modifierCriteria && targetDepth === sourceDepth;
   });
   components = filterElements(node, components, subComponent, config);
-  return components;
+  return typeof sQuery === 'function' ? sQuery(components) : components;
 }
 
 /***/ }),
@@ -357,11 +357,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 if (typeof process === 'undefined') window.process = {
   env: {}
 };
+var sQuery;
 function polymorph(element, styles) {
   var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
   var globals = arguments.length > 3 ? arguments[3] : undefined;
   var Synergy = window.Synergy || {};
-  var sQuery = window.sQuery;
+  sQuery = window.sQuery;
 
   if (!process.env.SYNERGY && !sQuery) {
     sQuery = {

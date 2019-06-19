@@ -1,10 +1,12 @@
 // `process` and `require` are exploited to help reduce bundle size
 if (typeof process === 'undefined') window.process = { env: {} };
 
+let sQuery;
+
 export default function polymorph(element, styles, config = {}, globals) {
     var Synergy = window.Synergy || {};
 
-    let sQuery = window.sQuery;
+    sQuery = window.sQuery
     
     if (!process.env.SYNERGY && !sQuery) {
         sQuery = {
