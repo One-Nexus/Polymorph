@@ -20,13 +20,15 @@ export default function polymorph(element, styles, config = {}, globals) {
     const modifierGlue  = config.modifierGlue  || Synergy.modifierGlue  || '-';
     const componentGlue = config.componentGlue || Synergy.componentGlue || '_';
 
+    const { state, context } = element;
+
     const CONFIG = { componentGlue, modifierGlue };
 
     let STYLESHEET = styles;
 
     if (typeof styles === 'function') {
-        if (element.context || element.state) {
-            STYLESHEET = styles(element.state, element.context, config, globals);
+        if (state || context) {
+            STYLESHEET = styles({ state, context, element }, config, globals);
         } else {
             STYLESHEET = styles(element, config, globals);
         }
@@ -34,11 +36,11 @@ export default function polymorph(element, styles, config = {}, globals) {
 
     if (styles.constructor === Array) {
         STYLESHEET = styles.map(style => {
-            if (typeof styles === 'function') {
-                if (element.context || element.state) {
-                    STYLESHEET = style(element.state, element.context, config, globals);
+            if (typeof style === 'function') {
+                if (state || context) {
+                    return style({ state, context, element }, config, globals);
                 } else {
-                    STYLESHEET = style(element, config, globals);
+                    return style(element, config, globals);
                 }
             } else {
                 return style;
@@ -128,8 +130,8 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
     });
 
     if (typeof stylesheet === 'function') {
-        if (element.context || element.state) {
-            stylesheet = stylesheet(element.state, element.context);
+        if (element.state || element.context) {
+            stylesheet = stylesheet({ state: element.state, context: element.context, element });
         } else {
             stylesheet = stylesheet(element);
         }
@@ -330,12 +332,14 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
 /**
  * 
  */
-function doStyles(el, styles) {
+function doStyles(element, styles) {
     if (typeof styles === 'function') {
-        if (el.context || el.state) {
-            styles = styles(el.state, el.context);
+        const { state, context } = element;
+
+        if (state || context) {
+            styles = styles({ state, context, element });
         } else {
-            styles = styles(el);
+            styles = styles(element);
         }
     }
 
@@ -344,7 +348,7 @@ function doStyles(el, styles) {
     Object.entries(styles).forEach(([key, value]) => {
         if (typeof value === 'function') {
             try {
-                return el.style[key] = value(el.style[key]);
+                return element.style[key] = value(element.style[key]);
             } catch(error) {
                 return error;
             }
@@ -355,7 +359,7 @@ function doStyles(el, styles) {
             return;
         }
 
-        return el.style[key] = value;
+        return element.style[key] = value;
     });
 
     const dependentElements = Object.values(styles).reduce((accumulator, currentValue) => {
