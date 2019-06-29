@@ -25,12 +25,24 @@ export default function polymorph(element, styles, config = {}, globals) {
     let STYLESHEET = styles;
 
     if (typeof styles === 'function') {
-        STYLESHEET = styles(element, config, globals);
+        if (element.context || element.state) {
+            STYLESHEET = styles(element.state, element.context, config, globals);
+        } else {
+            STYLESHEET = styles(element, config, globals);
+        }
     }
 
     if (styles.constructor === Array) {
         STYLESHEET = styles.map(style => {
-            return typeof style === 'function' ? style(element, config, globals) : style
+            if (typeof styles === 'function') {
+                if (element.context || element.state) {
+                    STYLESHEET = style(element.state, element.context, config, globals);
+                } else {
+                    STYLESHEET = style(element, config, globals);
+                }
+            } else {
+                return style;
+            }
         });
     }
 
@@ -69,7 +81,7 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
                 WRAPPER_ELEMENT.repaint(true)
             }
 
-            [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(el => {
+            [element, ...COMPONENTS, ...SUB_COMPONENTS].forEach(el => {    
                 if (el.polymorph) {
                     el.polymorph.rules.forEach(rule => {
                         if (rule.context.every(ruleContext => {
@@ -116,7 +128,11 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
     });
 
     if (typeof stylesheet === 'function') {
-        stylesheet = stylesheet(element);
+        if (element.context || element.state) {
+            stylesheet = stylesheet(element.state, element.context);
+        } else {
+            stylesheet = stylesheet(element);
+        }
     }
 
     if (!stylesheet) return;
@@ -316,7 +332,11 @@ function handleStyleSheet(element, stylesheet, config, context = []) {
  */
 function doStyles(el, styles) {
     if (typeof styles === 'function') {
-        styles = styles(el);
+        if (el.context || el.state) {
+            styles = styles(el.state, el.context);
+        } else {
+            styles = styles(el);
+        }
     }
 
     if (!styles) return;
@@ -351,21 +371,6 @@ function doStyles(el, styles) {
     }, []);
 
     return dependentElements;
-}
-
-/**
- * Wrapper for sQuery `hasModifier()`
- */
-polymorph.modifier = (element, modifier, modifierGlue, componentGlue) => {
-    var Synergy = window.Synergy || {};
-
-    modifierGlue  = modifierGlue  || Synergy.modifierGlue  || '-';
-    componentGlue = componentGlue || Synergy.componentGlue || '_';
-
-    return sQuery.hasModifier.bind({
-        modifierGlue,
-        componentGlue
-    })(element, modifier);
 }
 
 /**
